@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register | Voices & Visions Festival 2026</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/icons.css">
+  <link rel="stylesheet" href="css/register.css">
+</head>
+<body>
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <symbol id="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="icon-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></symbol>
+    <symbol id="icon-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+    <symbol id="icon-award" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></symbol>
+    <symbol id="icon-message" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></symbol>
+    <symbol id="icon-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="icon-building" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="17"/><line x1="15" y1="22" x2="15" y2="17"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="8" y1="6" x2="8" y2="6.01"/><line x1="12" y1="6" x2="12" y2="6.01"/><line x1="16" y1="6" x2="16" y2="6.01"/></symbol>
+    <symbol id="icon-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+    <symbol id="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></symbol>
+    <symbol id="icon-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+    <symbol id="icon-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+    <symbol id="icon-sparkles" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></symbol>
+  </svg>
+
+  <nav class="navbar no-print">
+    <div class="container">
+      <a href="index.html" class="navbar-brand">
+        <div class="brand-icon">SV</div>
+        SilverVerse
+      </a>
+      <ul class="navbar-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="index.html#about">About</a></li>
+        <li><a href="index.html#categories">Categories</a></li>
+        <li><a href="register.html" class="active">Register</a></li>
+      </ul>
+      <button class="mobile-toggle" onclick="document.querySelector('.navbar-links').classList.toggle('show')">
+        <svg><use href="#icon-menu"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <div class="register-page">
+    <div class="register-hero">
+      <div class="container">
+        <h1>Register for Voices & Visions</h1>
+        <p>Fill in your details below to secure your spot at the festival</p>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="register-card" id="registerCard">
+
+        <!-- Step Indicator Bar -->
+        <div class="step-bar" id="stepBar">
+          <div class="step-item active" data-step="1">
+            <div class="step-circle">1</div>
+            <span class="step-label">Category</span>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step-item" data-step="2">
+            <div class="step-circle">2</div>
+            <span class="step-label">Details</span>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step-item" data-step="3">
+            <div class="step-circle">3</div>
+            <span class="step-label">Payment</span>
+          </div>
+        </div>
+
+        <!-- Registration Form -->
+        <form id="regForm">
+          <h2>Registration Form</h2>
+          <p class="subtitle">All fields marked with * are required</p>
+
+          <div class="form-section-title">
+            <svg style="width:14px;height:14px;"><use href="#icon-sparkles"/></svg>
+            Category Selection
+          </div>
+
+          <div class="category-selector">
+            <div class="cat-option">
+              <input type="radio" name="category" id="cat-spectator" value="Spectator" checked>
+              <label for="cat-spectator">
+                <span class="icon icon-md"><svg><use href="#icon-eye"/></svg></span>
+                <span class="text">Spectator</span>
+              </label>
+            </div>
+            <div class="cat-option">
+              <input type="radio" name="category" id="cat-contestant" value="Contestant">
+              <label for="cat-contestant">
+                <span class="icon icon-md"><svg><use href="#icon-mic"/></svg></span>
+                <span class="text">Contestant</span>
+              </label>
+            </div>
+            <div class="cat-option">
+              <input type="radio" name="category" id="cat-vip" value="VIP">
+              <label for="cat-vip">
+                <span class="icon icon-md"><svg><use href="#icon-star"/></svg></span>
+                <span class="text">VIP</span>
+              </label>
+            </div>
+            <div class="cat-option">
+              <input type="radio" name="category" id="cat-judge" value="Judge">
+              <label for="cat-judge">
+                <span class="icon icon-md"><svg><use href="#icon-award"/></svg></span>
+                <span class="text">Judge</span>
+              </label>
+            </div>
+            <div class="cat-option">
+              <input type="radio" name="category" id="cat-speaker" value="Speaker">
+              <label for="cat-speaker">
+                <span class="icon icon-md"><svg><use href="#icon-message"/></svg></span>
+                <span class="text">Speaker</span>
+              </label>
+            </div>
+            <div class="cat-option">
+              <input type="radio" name="category" id="cat-volunteer" value="Volunteer">
+              <label for="cat-volunteer">
+                <span class="icon icon-md"><svg><use href="#icon-users"/></svg></span>
+                <span class="text">Volunteer</span>
+              </label>
+            </div>
+            <div class="cat-option">
+              <input type="radio" name="category" id="cat-sponsor" value="Sponsor">
+              <label for="cat-sponsor">
+                <span class="icon icon-md"><svg><use href="#icon-building"/></svg></span>
+                <span class="text">Sponsor</span>
+              </label>
+            </div>
+            <div class="cat-option">
+              <input type="radio" name="category" id="cat-media" value="Media">
+              <label for="cat-media">
+                <span class="icon icon-md"><svg><use href="#icon-camera"/></svg></span>
+                <span class="text">Media</span>
+              </label>
+            </div>
+            <div class="cat-option">
+              <input type="radio" name="category" id="cat-staff" value="Staff">
+              <label for="cat-staff">
+                <span class="icon icon-md"><svg><use href="#icon-users"/></svg></span>
+                <span class="text">Staff</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-section-title">
+            <svg style="width:14px;height:14px;"><use href="#icon-mic"/></svg>
+            Personal Information
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName">First Name *</label>
+              <input type="text" id="firstName" name="firstName" placeholder="Enter your first name" required>
+            </div>
+            <div class="form-group">
+              <label for="lastName">Last Name *</label>
+              <input type="text" id="lastName" name="lastName" placeholder="Enter your last name" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="email">Email Address *</label>
+              <input type="email" id="email" name="email" placeholder="you@example.com" required>
+            </div>
+            <div class="form-group">
+              <label for="phone">Phone Number *</label>
+              <input type="tel" id="phone" name="phone" placeholder="+234 xxx xxx xxxx" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="ticketType">Ticket Type *</label>
+            <select id="ticketType" name="ticketType" required>
+              <option value="Regular">Regular — ₦3,000</option>
+              <option value="VIP">VIP — ₦5,000</option>
+              <option value="VVIP">VVIP — ₦10,000</option>
+            </select>
+          </div>
+
+          <!-- Contestant Fields -->
+          <div id="contestantFields" style="display:none;">
+            <div class="form-section-title">Contestant Details</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="talent">Talent Category *</label>
+                <select id="talent" name="talent">
+                  <option value="">Select talent</option>
+                  <option value="Singing">Singing</option>
+                  <option value="Dancing">Dancing</option>
+                  <option value="Spoken Word">Spoken Word</option>
+                  <option value="Comedy">Comedy</option>
+                  <option value="Instrumental">Instrumental</option>
+                  <option value="Digital Art">Digital Art</option>
+                  <option value="Fashion Design">Fashion Design</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="perfTime">Preferred Performance Time</label>
+                <select id="perfTime" name="perfTime">
+                  <option value="">No preference</option>
+                  <option value="10:00 AM">10:00 AM</option>
+                  <option value="11:00 AM">11:00 AM</option>
+                  <option value="11:45 AM">11:45 AM</option>
+                  <option value="12:30 PM">12:30 PM</option>
+                  <option value="2:00 PM">2:00 PM</option>
+                  <option value="3:00 PM">3:00 PM</option>
+                  <option value="4:00 PM">4:00 PM</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Volunteer Fields -->
+          <div id="volunteerFields" style="display:none;">
+            <div class="form-section-title">Volunteer Details</div>
+            <div class="form-group">
+              <label for="department">Department *</label>
+              <select id="department" name="department">
+                <option value="">Select department</option>
+                <option value="Media">Media</option>
+                <option value="Logistics">Logistics</option>
+                <option value="Registration">Registration</option>
+                <option value="Stage Management">Stage Management</option>
+                <option value="Hospitality">Hospitality</option>
+                <option value="Security">Security</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-section-title">
+            <svg style="width:14px;height:14px;"><use href="#icon-upload"/></svg>
+            Payment
+          </div>
+
+          <div class="form-group">
+            <label>Upload Payment Receipt (screenshot/proof) *</label>
+            <div class="file-upload" id="fileUpload">
+              <div class="upload-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--gray-400)"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+              <p>Click to upload or drag and drop</p>
+              <p style="font-size:0.75rem;margin-top:4px;color:var(--gray-400);">PNG, JPG, PDF (max 5MB)</p>
+              <div class="filename" id="fileName"></div>
+              <input type="file" id="receiptFile" name="receiptFile" accept="image/*,.pdf" style="display:none;" required>
+            </div>
+          </div>
+
+          <div class="form-section-title">Additional Information</div>
+
+          <div class="form-group">
+            <label for="dietary">Dietary Requirements (if any)</label>
+            <input type="text" id="dietary" name="dietary" placeholder="e.g., Vegetarian, Halal, None">
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="agree" name="agree" required style="margin-right:8px;">
+              I agree to the terms and conditions of the Voices & Visions Festival 2026 *
+            </label>
+          </div>
+
+          <!-- Payment Summary Card -->
+          <div class="payment-summary-card">
+            <div class="summary-header">
+              <span class="summary-label">Payment Summary</span>
+              <span class="summary-powered">Powered by Flutterwave</span>
+            </div>
+            <div class="summary-row">
+              <span class="label">Ticket Type</span>
+              <span class="value" id="summaryTicketType">Regular</span>
+            </div>
+            <div class="summary-total">
+              <span class="label">Total Amount</span>
+              <span class="amount" id="summaryAmount">₦3,000</span>
+            </div>
+            <p class="summary-note">Payment will be processed securely via Flutterwave after submission.</p>
+          </div>
+
+          <div class="form-actions">
+            <button type="reset" class="btn btn-outline">Clear Form</button>
+            <button type="submit" class="btn btn-primary" id="submitBtn">
+              Submit &amp; Pay
+              <svg style="width:16px;height:16px;"><use href="#icon-chevron-right"/></svg>
+            </button>
+          </div>
+        </form>
+
+        <!-- Success State (hidden by default) -->
+        <div class="register-success" id="registerSuccess" style="display:none;">
+          <div class="success-icon-wrapper">
+            <div class="ring"></div>
+            <div class="ring-2"></div>
+            <div class="check-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </div>
+          <h2>Registration Submitted!</h2>
+          <p class="success-message">Your registration has been received. Please upload your payment receipt and wait for verification.</p>
+          <div class="reg-id-display" id="displayRegId">VV26-0001</div>
+          <p style="font-size:0.85rem;color:var(--gray-500);animation:fadeInUp 0.5s var(--ease-out-expo) 0.55s both;position:relative;z-index:1;">Save this Registration ID — you'll need it for your e-ticket.</p>
+          <div class="success-actions">
+            <a href="index.html" class="btn btn-outline">Back to Home</a>
+            <button onclick="window.print()" class="btn btn-primary">Print Confirmation</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer no-print">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2026 SilverVerse. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
+  <script src="js/register.js"></script>
+</body>
+</html>

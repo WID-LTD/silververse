@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Status | Voices & Visions Festival 2026</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/icons.css">
+  <link rel="stylesheet" href="css/tickets.css">
+  <style>
+    .payment-result {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      padding-top: calc(var(--header-height) + 40px);
+      background: linear-gradient(180deg, var(--gray-100) 0%, var(--off-white) 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .payment-card {
+      max-width: 480px;
+      width: 100%;
+      background: var(--white);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-xl), 0 0 0 1px rgba(0,0,0,0.03);
+      padding: 48px 36px;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+      animation: fadeInUp 0.6s var(--ease-out-expo);
+    }
+
+    .payment-card .status-icon {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      position: relative;
+    }
+
+    .payment-card .status-icon .icon-ring {
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      opacity: 0.2;
+    }
+
+    .payment-card .status-icon .icon-ring-2 {
+      position: absolute;
+      inset: -14px;
+      border-radius: 50%;
+      border: 1.5px solid currentColor;
+      opacity: 0.1;
+    }
+
+    .payment-card .status-icon.success {
+      background: #d1fae5;
+      color: var(--success);
+      animation: successBounce 0.6s var(--ease-out-expo) 0.2s both;
+    }
+
+    .payment-card .status-icon.error {
+      background: #fee2e2;
+      color: var(--danger);
+      animation: successBounce 0.6s var(--ease-out-expo) 0.2s both;
+    }
+
+    .payment-card .status-icon.pending {
+      background: #fef3c7;
+      color: var(--warning);
+      animation: successBounce 0.6s var(--ease-out-expo) 0.2s both;
+    }
+
+    .payment-card h1 {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+      animation: fadeInUp 0.5s var(--ease-out-expo) 0.3s both;
+    }
+
+    .payment-card .status-text {
+      color: var(--gray-500);
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+      line-height: 1.7;
+      animation: fadeInUp 0.5s var(--ease-out-expo) 0.4s both;
+    }
+
+    .payment-card .tx-ref {
+      display: inline-block;
+      padding: 10px 20px;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin-bottom: 24px;
+      font-family: monospace;
+      animation: fadeInUp 0.5s var(--ease-out-expo) 0.45s both;
+    }
+
+    .payment-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      animation: fadeInUp 0.5s var(--ease-out-expo) 0.5s both;
+    }
+
+    @keyframes successBounce {
+      0% { opacity: 0; transform: scale(0.3); }
+      50% { transform: scale(1.05); }
+      70% { transform: scale(0.95); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* CSS Confetti */
+    .confetti-wrap {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      top: -20px;
+      opacity: 0;
+    }
+
+    .confetti.active {
+      animation: confettiFall 3s ease-in forwards;
+    }
+
+    @keyframes confettiFall {
+      0% { opacity: 1; top: -20px; transform: rotate(0deg) translateX(0); }
+      25% { opacity: 1; }
+      100% { opacity: 0; top: 110%; transform: rotate(720deg) translateX(var(--drift)); }
+    }
+
+    .confetti:nth-child(1) { left: 10%; --drift: 30px; animation-delay: 0s; background: var(--primary); border-radius: 2px; }
+    .confetti:nth-child(2) { left: 20%; --drift: -20px; animation-delay: 0.1s; background: var(--gold); border-radius: 50%; width: 8px; height: 8px; }
+    .confetti:nth-child(3) { left: 35%; --drift: 15px; animation-delay: 0.2s; background: var(--success); border-radius: 1px; width: 12px; height: 6px; }
+    .confetti:nth-child(4) { left: 50%; --drift: -25px; animation-delay: 0.15s; background: #8b5cf6; border-radius: 2px; }
+    .confetti:nth-child(5) { left: 65%; --drift: 20px; animation-delay: 0.05s; background: var(--primary-light); border-radius: 50%; width: 6px; height: 6px; }
+    .confetti:nth-child(6) { left: 75%; --drift: -15px; animation-delay: 0.25s; background: var(--gold-light); border-radius: 1px; width: 10px; height: 5px; }
+    .confetti:nth-child(7) { left: 85%; --drift: 10px; animation-delay: 0.3s; background: var(--danger); border-radius: 2px; width: 8px; height: 12px; }
+    .confetti:nth-child(8) { left: 42%; --drift: -30px; animation-delay: 0.12s; background: #06b6d4; border-radius: 50%; width: 7px; height: 7px; }
+  </style>
+</head>
+<body>
+  <nav class="navbar no-print">
+    <div class="container">
+      <a href="index.html" class="navbar-brand">
+        <div class="brand-icon">SV</div>
+        SilverVerse
+      </a>
+      <ul class="navbar-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="register.html">Register</a></li>
+      </ul>
+      <button class="mobile-toggle" onclick="document.querySelector('.navbar-links').classList.toggle('show')">
+        <svg><use href="#icon-menu"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <div class="payment-result">
+    <div class="confetti-wrap" id="confettiWrap">
+      <div class="confetti"></div>
+      <div class="confetti"></div>
+      <div class="confetti"></div>
+      <div class="confetti"></div>
+      <div class="confetti"></div>
+      <div class="confetti"></div>
+      <div class="confetti"></div>
+      <div class="confetti"></div>
+    </div>
+    <div class="payment-card" id="paymentCard">
+      <div class="status-icon" id="statusIcon">
+        <div class="icon-ring"></div>
+        <div class="icon-ring-2"></div>
+        <span id="statusIconSvg"></span>
+      </div>
+      <h1 id="statusTitle">Processing Payment...</h1>
+      <p class="status-text" id="statusText">Please wait while we verify your payment.</p>
+      <div class="tx-ref" id="txRef" style="display:none;"></div>
+      <div class="payment-actions">
+        <a href="index.html" class="btn btn-outline" id="homeBtn">Back to Home</a>
+        <a href="register.html" class="btn btn-primary" id="actionBtn" style="display:none;">Register Again</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const txRef = params.get('tx_ref') || params.get('transaction_id') || params.get('flwref');
+    const status = params.get('status');
+    const transactionId = params.get('transaction_id');
+
+    const iconEl = document.getElementById('statusIcon');
+    const iconSvg = document.getElementById('statusIconSvg');
+    const titleEl = document.getElementById('statusTitle');
+    const textEl = document.getElementById('statusText');
+    const txRefEl = document.getElementById('txRef');
+    const actionBtn = document.getElementById('actionBtn');
+    const confettiWrap = document.getElementById('confettiWrap');
+
+    function launchConfetti() {
+      const confettis = confettiWrap.querySelectorAll('.confetti');
+      confettis.forEach(c => c.classList.add('active'));
+    }
+
+    function showResult(type) {
+      if (type === 'success') {
+        iconEl.className = 'status-icon success';
+        iconSvg.innerHTML = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        titleEl.textContent = 'Payment Successful!';
+        textEl.textContent = 'Your payment has been confirmed. You will receive your e-ticket shortly. Please check your email.';
+        launchConfetti();
+      } else if (type === 'failed') {
+        iconEl.className = 'status-icon error';
+        iconSvg.innerHTML = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+        titleEl.textContent = 'Payment Failed';
+        textEl.textContent = 'Your payment could not be processed. Please try again or contact support.';
+        actionBtn.style.display = 'inline-flex';
+      } else {
+        iconEl.className = 'status-icon pending';
+        iconSvg.innerHTML = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+        titleEl.textContent = 'Payment Pending';
+        textEl.textContent = 'Your payment is being processed. Please wait a few minutes and check back.';
+        actionBtn.style.display = 'inline-flex';
+      }
+
+      if (txRef) {
+        txRefEl.textContent = 'Transaction: ' + txRef;
+        txRefEl.style.display = 'inline-block';
+      }
+    }
+
+    if (status === 'successful' || status === 'success') {
+      showResult('success');
+      if (txRef) {
+        fetch('/api/payment/verify/' + encodeURIComponent(txRef))
+          .then(r => r.json())
+          .then(d => console.log('Verification:', d))
+          .catch(e => console.error('Verify error:', e));
+      }
+    } else if (status === 'failed' || status === 'declined') {
+      showResult('failed');
+    } else if (txRef || transactionId) {
+      showResult('pending');
+      if (txRef) {
+        fetch('/api/payment/verify/' + encodeURIComponent(txRef))
+          .then(r => r.json())
+          .then(d => {
+            if (d.success && d.data && d.data.status === 'successful') {
+              showResult('success');
+            }
+          })
+          .catch(e => console.error(e));
+      }
+    } else {
+      showResult('pending');
+    }
+  </script>
+</body>
+</html>

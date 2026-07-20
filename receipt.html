@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Official Receipt | Voices & Visions Festival 2026</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/icons.css">
+  <link rel="stylesheet" href="css/tickets.css">
+</head>
+<body>
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <symbol id="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></symbol>
+    <symbol id="icon-printer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+    <symbol id="icon-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+  </svg>
+
+  <nav class="navbar no-print">
+    <div class="container">
+      <a href="index.html" class="navbar-brand">
+        <div class="brand-icon">SV</div>
+        SilverVerse
+      </a>
+      <ul class="navbar-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="register.html">Register</a></li>
+        <li><a href="gate-checkin.html">Gate Check-in</a></li>
+      </ul>
+      <button class="mobile-toggle" onclick="document.querySelector('.navbar-links').classList.toggle('show')">
+        <svg><use href="#icon-menu"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <div class="ticket-page">
+    <div class="ticket-actions no-print">
+      <button onclick="window.print()" class="btn btn-primary">
+        <svg style="width:16px;height:16px;"><use href="#icon-printer"/></svg> Print Receipt
+      </button>
+      <button onclick="downloadReceipt()" class="btn btn-outline">
+        <svg style="width:16px;height:16px;"><use href="#icon-download"/></svg> Save as PDF
+      </button>
+      <button onclick="shareReceipt()" class="btn btn-outline">
+        <svg style="width:16px;height:16px;"><use href="#icon-share"/></svg> Share
+      </button>
+    </div>
+
+    <div class="receipt" id="receipt">
+      <div class="receipt-header">
+        <div class="logo">SILVERVERSE</div>
+        <div class="event-name">Voices & Visions Festival 2026</div>
+        <div class="theme">Discovering Talent · Inspiring Purpose · Building the Future</div>
+      </div>
+
+      <div class="receipt-body">
+        <div class="receipt-title">Official Payment Confirmation Receipt</div>
+
+        <div class="receipt-details">
+          <div class="receipt-row">
+            <span class="label">Registration ID</span>
+            <span class="value" id="r-regId">VV26-0048</span>
+          </div>
+          <div class="receipt-row">
+            <span class="label">Full Name</span>
+            <span class="value" id="r-name">John David</span>
+          </div>
+          <div class="receipt-row">
+            <span class="label">Category</span>
+            <span class="value" id="r-category">Spectator</span>
+          </div>
+          <div class="receipt-row">
+            <span class="label">Ticket Type</span>
+            <span class="value" id="r-ticketType">VIP</span>
+          </div>
+          <div class="receipt-row">
+            <span class="label">Payment Status</span>
+            <span class="value status-verified" id="r-paymentStatus">
+              <span style="display:inline-flex;align-items:center;gap:4px;">
+                <svg style="width:14px;height:14px;color:var(--success);"><use href="#icon-check"/></svg>
+                VERIFIED
+              </span>
+            </span>
+          </div>
+          <div class="receipt-row">
+            <span class="label">Amount Paid</span>
+            <span class="value amount" id="r-amount">₦5,000</span>
+          </div>
+          <div class="receipt-row">
+            <span class="label">Payment Date</span>
+            <span class="value" id="r-payDate">15 August 2026</span>
+          </div>
+          <div class="receipt-row">
+            <span class="label">Venue</span>
+            <span class="value" id="r-venue">Lagos Conference Centre</span>
+          </div>
+          <div class="receipt-row">
+            <span class="label">Event Date</span>
+            <span class="value" id="r-eventDate">15 August 2026</span>
+          </div>
+          <div class="receipt-row">
+            <span class="label">Time</span>
+            <span class="value" id="r-time">10:00 AM</span>
+          </div>
+        </div>
+
+        <div class="receipt-notice">
+          <p><strong>IMPORTANT NOTICE</strong><br>
+          This receipt confirms that your registration has been approved.<br>
+          Please present this receipt (printed or on your phone) at the entrance.<br>
+          <strong>Without this receipt, entry may be denied.</strong></p>
+        </div>
+
+        <div class="receipt-footer">
+          <div class="receipt-stamp">
+            <div class="stamp-circle">Silver<br>Verse<br>Official</div>
+            <div class="stamp-text">SilverVerse Official Stamp</div>
+          </div>
+          <div class="receipt-signature">
+            <div class="sig-line">Tunde Bakare</div>
+            <div class="sig-label">Authorized Signature</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer no-print">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2026 SilverVerse. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
+  <script>
+    function loadReceipt() {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      const data = id ? app.getData(id) : app.getLatest();
+
+      if (!data) {
+        document.getElementById('receipt').innerHTML = `
+          <div class="receipt-empty">
+            <div class="empty-icon">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            </div>
+            <h2>No Registration Found</h2>
+            <p>No registration data found. Please register first.</p>
+            <a href="register.html" class="btn btn-primary">Register Now</a>
+          </div>`;
+        return;
+      }
+
+      const amount = data.ticketType === 'VVIP' ? '₦10,000' : data.ticketType === 'VIP' ? '₦5,000' : '₦3,000';
+      document.getElementById('r-regId').textContent = data.regId;
+      document.getElementById('r-name').textContent = data.firstName + ' ' + data.lastName;
+      document.getElementById('r-category').textContent = data.category;
+      document.getElementById('r-ticketType').textContent = data.ticketType;
+      document.getElementById('r-amount').textContent = amount;
+      document.getElementById('r-payDate').textContent = data.createdAt || '15 August 2026';
+
+      if (data.talent) {
+        const extra = document.createElement('div');
+        extra.className = 'receipt-row';
+        extra.innerHTML = `<span class="label">Talent</span><span class="value">${data.talent}</span>`;
+        document.querySelector('.receipt-details').appendChild(extra);
+      }
+    }
+
+    function downloadReceipt() { window.print(); }
+    function shareReceipt() {
+      if (navigator.share) {
+        navigator.share({ title: 'SilverVerse Payment Receipt', text: 'My official payment receipt for Voices & Visions Festival 2026', url: window.location.href });
+      } else {
+        navigator.clipboard.writeText(window.location.href).then(() => { alert('Link copied to clipboard!'); });
+      }
+    }
+
+    loadReceipt();
+  </script>
+</body>
+</html>
