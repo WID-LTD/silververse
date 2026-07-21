@@ -3,7 +3,7 @@ services:
     name: silververse-api
     runtime: node
     region: oregon
-    rootDir: server
+    rootDir: .
     buildCommand: npm install
     startCommand: node server.js
     healthCheckPath: /api/stats

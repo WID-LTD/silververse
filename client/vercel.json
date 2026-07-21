@@ -3,11 +3,10 @@
   "name": "silververse-client",
   "builds": [
     {
-      "src": "client/**/*",
+      "src": "**/*",
       "use": "@vercel/static"
     }
   ],
-  "outputDirectory": "client",
   "routes": [
     {
       "src": "/api/(.*)",
@@ -15,7 +14,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/client/$1"
+      "dest": "/$1"
     }
   ],
   "headers": [

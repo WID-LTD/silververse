@@ -5,7 +5,7 @@ const path = require('path');
 const url = require('url');
 
 const CLIENT_PORT = process.env.CLIENT_PORT || 5050;
-const API_URL = process.env.API_URL || 'http://localhost:5000';
+const API_URL = process.env.API_URL || 'http://localhost:10000';
 const ROOT = __dirname;
 
 const apiHost = new URL(API_URL);
