@@ -49,44 +49,13 @@ if (DB_ENABLED) {
   console.log('⚠ No DATABASE_URL — running in local-only mode');
 }
 
-// ── Session Store ──
-let sessionMiddleware;
-if (DB_ENABLED) {
-  try {
-    const { Pool } = require('pg');
-    const PgSession = require('connect-pg-simple')(session);
-    const pgPool = new Pool({ connectionString: process.env.DATABASE_URL });
-
-    sessionMiddleware = session({
-      store: new PgSession({ pool: pgPool, tableName: 'session', createTableIfMissing: true }),
-      secret: process.env.SESSION_SECRET || 'silververse-secret-key-change-in-prod',
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      },
-    });
-    console.log('✓ Session store (connect-pg-simple) ready');
-  } catch (err) {
-    console.error('⚠ Session store init failed, using MemoryStore:', err.message);
-    sessionMiddleware = session({
-      secret: process.env.SESSION_SECRET || 'silververse-secret-key-change-in-prod',
-      resave: false,
-      saveUninitialized: false,
-      cookie: { maxAge: 7 * 24 * 60 * 60 * 1000, httpOnly: true },
-    });
-  }
-} else {
-  sessionMiddleware = session({
-    secret: process.env.SESSION_SECRET || 'silververse-secret-key-change-in-prod',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { maxAge: 7 * 24 * 60 * 60 * 1000, httpOnly: true },
-  });
-}
+// ── Session Store (default in-memory) ──
+let sessionMiddleware = session({
+  secret: process.env.SESSION_SECRET || 'silververse-secret-key-change-in-prod',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 7 * 24 * 60 * 60 * 1000, httpOnly: true },
+});
 app.use(sessionMiddleware);
 
 // ── Cloudflare R2 ──
@@ -218,6 +187,21 @@ app.use((err, req, res, next) => {
 
 // ── Start Server ──
 setupDB(sql).then(() => {
+  // Upgrade to PG session store if DB is connected
+  if (isDBEnabled() && sql) {
+    try {
+      const { Pool } = require('pg');
+      const PgSession = require('connect-pg-simple')(session);
+      const pgPool = new Pool({ connectionString: process.env.DATABASE_URL });
+      const pgSessionStore = new PgSession({ pool: pgPool, tableName: 'session', createTableIfMissing: true });
+
+      sessionMiddleware.store = pgSessionStore;
+      console.log('✓ Session store upgraded to PostgreSQL');
+    } catch (err) {
+      console.error('⚠ PG session store failed, keeping MemoryStore:', err.message);
+    }
+  }
+
   app.listen(PORT, () => {
     console.log(`\n🎤 SilverVerse API Server`);
     console.log(`   API running at http://localhost:${PORT}`);
