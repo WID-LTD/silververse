@@ -61,7 +61,7 @@ async function initDB(sqlFn) {
       name VARCHAR(200) NOT NULL,
       description TEXT,
       event_date DATE,
-      venue VARCHAR(200) DEFAULT 'Lagos Conference Centre',
+      venue VARCHAR(200) DEFAULT 'Rochas Foundation, Ideato, Orlu, Imo State',
       status VARCHAR(20) DEFAULT 'upcoming',
       created_at TIMESTAMP DEFAULT NOW()
     )
@@ -118,7 +118,7 @@ async function seedEvent(sqlFn) {
         'Voices & Visions Festival 2026',
         'A grand celebration of talent, culture, and creativity.',
         '2026-08-15',
-        'Lagos Conference Centre',
+        'Rochas Foundation, Ideato, Orlu, Imo State',
         'upcoming'
       )
     `;

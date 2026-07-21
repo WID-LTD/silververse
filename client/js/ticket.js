@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function () {
           '<div class="ticket-field"><div class="field-label">Category</div><div class="field-value">' + escapeHtml(data.category) + '</div></div>' +
           '<div class="ticket-field"><div class="field-label">Seat</div><div class="field-value">' + escapeHtml(seat) + '</div></div>' +
           '<div class="ticket-field"><div class="field-label">Status</div><div class="field-value ' + statusClass + '">' + statusLabel + '</div></div>' +
-          '<div class="ticket-field"><div class="field-label">Venue</div><div class="field-value">Lagos Conference Centre</div></div>' +
+          '<div class="ticket-field"><div class="field-label">Venue</div><div class="field-value">Rochas Foundation, Ideato, Orlu, Imo State</div></div>' +
           '<div class="ticket-field"><div class="field-label">Date</div><div class="field-value">15 August 2026</div></div>' +
           '<div class="ticket-field"><div class="field-label">Time</div><div class="field-value">10:00 AM</div></div>' +
           extraHTML +

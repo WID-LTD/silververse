@@ -294,7 +294,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     if (allEvents.length === 0) {
       allEvents = [
-        { name: 'Voices & Visions Festival 2026', date: '2026-08-15', location: 'Lagos Conference Centre', status: 'upcoming' }
+        { name: 'Voices & Visions Festival 2026', date: '2026-08-15', location: 'Rochas Foundation, Ideato, Orlu, Imo State', status: 'upcoming' }
       ];
     }
 

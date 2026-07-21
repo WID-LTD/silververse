@@ -182,7 +182,7 @@ router.post('/events', requireAdmin, async (req, res) => {
       const sql = getSQL();
       const result = await sql`
         INSERT INTO events (name, description, event_date, venue)
-        VALUES (${name}, ${description || ''}, ${event_date || null}, ${venue || 'Lagos Conference Centre'})
+        VALUES (${name}, ${description || ''}, ${event_date || null}, ${venue || 'Rochas Foundation, Ideato, Orlu, Imo State'})
         RETURNING *
       `;
       const e = result[0];
@@ -194,7 +194,7 @@ router.post('/events', requireAdmin, async (req, res) => {
       const events = getMemEvents();
       const newEvent = {
         id: events.length + 1, name, description: description || '',
-        event_date: event_date || null, venue: venue || 'Lagos Conference Centre',
+        event_date: event_date || null, venue: venue || 'Rochas Foundation, Ideato, Orlu, Imo State',
         status: 'upcoming', created_at: new Date().toISOString()
       };
       events.push(newEvent);

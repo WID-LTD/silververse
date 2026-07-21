@@ -30,7 +30,7 @@ router.get('/:regId', async (req, res) => {
           checkedInTime: r.checked_in_time || null,
           eventName: r.event_name || '',
           eventDate: r.event_date || null,
-          venue: r.event_venue || 'Lagos Conference Centre',
+          venue: r.event_venue || 'Rochas Foundation, Ideato, Orlu, Imo State',
         }
       });
     } else {
@@ -54,7 +54,7 @@ router.get('/:regId', async (req, res) => {
           checkedInTime: reg.checked_in_time || null,
           eventName: event ? event.name : '',
           eventDate: event ? event.event_date : null,
-          venue: event ? event.venue : 'Lagos Conference Centre',
+          venue: event ? event.venue : 'Rochas Foundation, Ideato, Orlu, Imo State',
         }
       });
     }

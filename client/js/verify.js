@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function () {
           renderDetailRow('Check-in Status', checkinBadge) +
           renderDetailRow('Event', 'Voices & Visions Festival 2026') +
           renderDetailRow('Date', '15 August 2026') +
-          renderDetailRow('Venue', 'Lagos Conference Centre') +
+          renderDetailRow('Venue', 'Rochas Foundation, Ideato, Orlu, Imo State') +
         '</div>' +
         '<div class="verify-actions">' +
           '<a href="ticket.html?id=' + encodeURIComponent(ticket.regId) + '" class="btn btn-primary btn-sm">View Ticket</a>' +
