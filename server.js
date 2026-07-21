@@ -9,12 +9,20 @@ const QRCode = require('qrcode');
 const Flutterwave = require('flutterwave-node-v3');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
+
+// ── CORS (allow client on 5050) ──
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
 
 // ── Middleware ──
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname)));
 
 // ── Flutterwave ──
 const FLW_ENABLED = !!(process.env.FLW_PUBLIC_KEY && process.env.FLW_SECRET_KEY);
@@ -342,7 +350,7 @@ app.get('/api/stats', async (req, res) => {
 // ═══════════════════════════════════════
 
 const TICKET_PRICES = { Regular: 3000, VIP: 5000, VVIP: 10000 };
-const CALLBACK_URL = process.env.FLW_CALLBACK_URL || `http://localhost:${PORT}/payment-success.html`;
+const CALLBACK_URL = process.env.FLW_CALLBACK_URL || `http://localhost:5050/payment-success.html`;
 
 // POST /api/payment/initialize — Create a Flutterwave payment link
 app.post('/api/payment/initialize', async (req, res) => {
@@ -487,9 +495,8 @@ app.get('/api/qr/:id', async (req, res) => {
 // ── Start Server ──
 initDB().then(() => {
   app.listen(PORT, () => {
-    console.log(`\n🎤 SilverVerse — Voices & Visions Festival 2026`);
-    console.log(`   Server running at http://localhost:${PORT}`);
-    console.log(`   Gate Check-in: http://localhost:${PORT}/gate-checkin.html`);
-    console.log(`   Register:      http://localhost:${PORT}/register.html\n`);
+    console.log(`\n🎤 SilverVerse API Server`);
+    console.log(`   API running at http://localhost:${PORT}`);
+    console.log(`   Endpoints: /api/register, /api/registrations, /api/checkin, /api/stats\n`);
   });
 });

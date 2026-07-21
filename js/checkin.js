@@ -55,6 +55,12 @@ function updateStats() {
   document.getElementById('statChecked').textContent = stats.checkedIn;
   document.getElementById('statPending').textContent = stats.pending;
   document.getElementById('statContestants').textContent = stats.contestants;
+
+  const pct = stats.total > 0 ? Math.round((stats.checkedIn / stats.total) * 100) : 0;
+  const fillEl = document.getElementById('progressFill');
+  const pctEl = document.getElementById('progressPct');
+  if (fillEl) fillEl.style.width = pct + '%';
+  if (pctEl) pctEl.textContent = pct + '%';
 }
 
 function toggleCheckin(regId) {
