@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register | SilverVerse Voices & Visions Festival 2026</title>
+  <meta name="description" content="Register for the Voices & Visions Festival 2026. Choose your category — contestant, spectator, VIP, volunteer, or speaker — and secure your spot.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/icons.css">
+  <link rel="stylesheet" href="css/register.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <!-- Navbar -->
+  <nav class="navbar navbar-scrolled no-print" aria-label="Primary navigation">
+    <div class="container">
+      <a href="index.html" class="navbar-brand">
+        <img src="public/silververse.png" alt="SilverVerse" width="40" height="40" style="border-radius:8px;">
+        SilverVerse
+      </a>
+      <ul class="navbar-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="login.html">Login</a></li>
+      </ul>
+      <button class="mobile-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="navLinks">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <main class="register-page" id="main-content">
+    <!-- Hero header -->
+    <div class="register-hero">
+      <div class="container">
+        <h1 id="registerTitle">Register for Voices &amp; Visions</h1>
+        <p id="registerSubtitle">Choose your path and join the festival</p>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="register-card">
+
+        <!-- CTA Selection (shown when no ?cta param) -->
+        <div id="ctaSelection" class="cta-selection" style="display:none;">
+          <h2>How would you like to participate?</h2>
+          <p class="subtitle">Select your registration path to get started</p>
+          <div class="cta-grid">
+            <a href="register.html?cta=contestant" class="cta-card">
+              <img src="assets/images/singer.jpg" alt="Become a contestant" width="400" height="250" loading="lazy">
+              <div class="cta-card-body">
+                <h3>I Want to Compete</h3>
+                <p>Showcase your talent on the main stage and compete for amazing prizes.</p>
+              </div>
+            </a>
+            <a href="register.html?cta=user" class="cta-card">
+              <img src="assets/images/audience.jpg" alt="Attend as a guest" width="400" height="250" loading="lazy">
+              <div class="cta-card-body">
+                <h3>I Want to Attend</h3>
+                <p>Join as a spectator, VIP guest, volunteer, or speaker.</p>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Step-by-step form (shown when ?cta is present) -->
+        <div id="stepForm" style="display:none;">
+          <!-- Step indicator bar -->
+          <div class="step-bar">
+            <div class="step-item active" data-step="1">
+              <div class="step-circle">1</div>
+              <span class="step-label">Category</span>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step-item" data-step="2">
+              <div class="step-circle">2</div>
+              <span class="step-label">Your Info</span>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step-item" data-step="3">
+              <div class="step-circle">3</div>
+              <span class="step-label">Payment</span>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step-item" data-step="4">
+              <div class="step-circle">4</div>
+              <span class="step-label">Account</span>
+            </div>
+          </div>
+
+          <!-- Step 1: Category Selection -->
+          <div class="form-step active" id="step1"></div>
+
+          <!-- Step 2: Personal Information -->
+          <div class="form-step" id="step2"></div>
+
+          <!-- Step 3: Payment -->
+          <div class="form-step" id="step3"></div>
+
+          <!-- Step 4: Account Setup -->
+          <div class="form-step" id="step4"></div>
+        </div>
+
+        <!-- Success State -->
+        <div id="registerSuccess" style="display:none;">
+          <div class="register-success">
+            <div class="success-icon-wrapper">
+              <div class="ring"></div>
+              <div class="ring-2"></div>
+              <div class="check-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+            </div>
+            <h2>Registration Successful!</h2>
+            <p class="success-message">Welcome to SilverVerse Voices &amp; Visions Festival 2026.</p>
+            <div class="reg-id-display" id="displayRegId">VV26-0001</div>
+            <p style="font-size:0.85rem;color:var(--gray-500);animation:fadeInUp 0.5s var(--ease-out-expo) 0.55s both;position:relative;z-index:1;">Save this Registration ID — you'll need it for your e-ticket.</p>
+            <div class="success-actions">
+              <a href="dashboard.html" class="btn btn-primary">Go to Dashboard</a>
+              <a href="index.html" class="btn btn-outline">Back to Home</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer no-print">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2026 SilverVerse. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="vendor/flutterwave.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/register.js"></script>
+</body>
+</html>

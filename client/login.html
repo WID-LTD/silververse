@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | SilverVerse Voices & Visions Festival 2026</title>
+  <meta name="description" content="Log in to your SilverVerse account to access your ticket, dashboard, and registration details.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="auth-page">
+    <!-- Left Visual Panel -->
+    <aside class="auth-visual" aria-hidden="true" style="background-image:url('assets/images/login-hero.jpg');background-size:cover;background-position:center;">
+      <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(10,15,44,0.92),rgba(30,64,175,0.85));"></div>
+      <div class="auth-visual-content">
+        <div class="brand-logo">
+          <div class="logo-icon">SV</div>
+          <span class="logo-text">SilverVerse</span>
+        </div>
+        <h2>Voices &amp; Visions Festival 2026</h2>
+        <p>The biggest celebration of talent, creativity, and community. Don't miss out.</p>
+        <ul class="auth-visual-features">
+          <li>
+            <span class="feat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            Compete in 5 talent categories
+          </li>
+          <li>
+            <span class="feat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            VIP and VVIP experiences
+          </li>
+          <li>
+            <span class="feat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            Win amazing prizes
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Right Form Panel -->
+    <main class="auth-form-side" id="main-content">
+      <div class="auth-form-container">
+        <!-- Simplified Navbar -->
+        <nav class="auth-nav" aria-label="Primary navigation">
+          <a href="index.html" class="auth-nav-brand">
+            <img src="public/silververse.png" alt="" width="32" height="32" style="border-radius:6px;">
+            SilverVerse
+          </a>
+        </nav>
+
+        <div class="auth-form-header">
+          <h1>Welcome Back</h1>
+          <p>Sign in to your SilverVerse account</p>
+        </div>
+
+        <div id="loginError" class="auth-error" role="alert" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <span id="loginErrorMsg"></span>
+        </div>
+
+        <form id="loginForm" class="auth-form" novalidate>
+          <div class="form-group">
+            <label for="loginUsername" class="prompt-label">What should we call you?</label>
+            <span class="prompt-sublabel">Your username or email</span>
+            <input type="text" id="loginUsername" name="username" placeholder="Enter your username" autocomplete="username" required aria-required="true">
+          </div>
+
+          <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <div class="password-field">
+              <input type="password" id="loginPassword" name="password" placeholder="Enter your password" autocomplete="current-password" required aria-required="true">
+              <button type="button" class="password-toggle" aria-label="Show password" title="Show password">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="auth-extras">
+            <label class="checkbox-wrap">
+              <input type="checkbox" id="rememberMe" name="remember">
+              <span>Remember me</span>
+            </label>
+            <a href="forgot-password.html" class="forgot-link">Forgot password?</a>
+          </div>
+
+          <button type="submit" id="loginBtn" class="btn btn-primary">
+            <span class="btn-text">Sign In</span>
+            <span class="btn-spinner" style="display:none;" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            </span>
+          </button>
+        </form>
+
+        <p class="auth-footer-text">
+          Don't have an account? <a href="register.html">Register</a>
+        </p>
+      </div>
+    </main>
+  </div>
+
+  <footer class="footer auth-footer no-print">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2026 SilverVerse. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/nav.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Ticket | SilverVerse</title>
+  <meta name="description" content="Verify a SilverVerse ticket. Scan or enter a registration ID to confirm ticket validity.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <style>
+    .verify-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .verify-hero {
+      background: url('assets/images/verify-hero.jpg') center/cover no-repeat;
+      position: relative;
+      padding: 140px 0 80px;
+      text-align: center;
+      color: var(--white);
+    }
+    .verify-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(10,15,44,0.88) 0%, rgba(30,64,175,0.82) 100%);
+    }
+    .verify-hero .container {
+      position: relative;
+      z-index: 1;
+    }
+    .verify-hero h1 {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--white);
+      margin-bottom: 12px;
+    }
+    .verify-hero p {
+      font-size: 1rem;
+      opacity: 0.8;
+      max-width: 500px;
+      margin: 0 auto 32px;
+    }
+    .verify-form {
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      gap: 12px;
+    }
+    .verify-form input {
+      flex: 1;
+      padding: 14px 18px;
+      border: 2px solid rgba(255,255,255,0.25);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.1);
+      color: var(--white);
+      font-family: var(--font-primary);
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      backdrop-filter: blur(8px);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .verify-form input::placeholder {
+      color: rgba(255,255,255,0.45);
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 400;
+    }
+    .verify-form input:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(212,160,23,0.3);
+    }
+    .verify-form .btn {
+      flex-shrink: 0;
+    }
+    .verify-body {
+      flex: 1;
+      padding: 48px 20px;
+      background: var(--off-white);
+    }
+    .verify-result {
+      max-width: 560px;
+      margin: 0 auto;
+      display: none;
+    }
+    .verify-result.show {
+      display: block;
+      animation: fadeInUp 0.5s var(--ease-out-expo);
+    }
+    .verify-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+    }
+    .verify-card-header {
+      padding: 32px 28px;
+      text-align: center;
+      position: relative;
+    }
+    .verify-card-header.valid {
+      background: linear-gradient(135deg, #059669, #10b981);
+      color: var(--white);
+    }
+    .verify-card-header.invalid {
+      background: linear-gradient(135deg, #dc2626, #ef4444);
+      color: var(--white);
+    }
+    .verify-card-header.warning {
+      background: linear-gradient(135deg, #d97706, #f59e0b);
+      color: var(--white);
+    }
+    .verify-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .verify-icon svg {
+      width: 32px;
+      height: 32px;
+    }
+    .verify-card-header h2 {
+      font-size: 1.3rem;
+      color: var(--white);
+      margin-bottom: 4px;
+    }
+    .verify-card-header p {
+      opacity: 0.85;
+      font-size: 0.9rem;
+    }
+    .verify-card-body {
+      padding: 28px;
+    }
+    .verify-detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .verify-detail-row:last-child {
+      border-bottom: none;
+    }
+    .verify-detail-row .detail-label {
+      font-size: 0.82rem;
+      color: var(--gray-500);
+      font-weight: 500;
+    }
+    .verify-detail-row .detail-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--gray-800);
+    }
+    .verify-actions {
+      padding: 20px 28px;
+      border-top: 1px solid var(--gray-100);
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      background: var(--gray-50);
+    }
+    .verify-loading {
+      text-align: center;
+      padding: 48px 28px;
+      color: var(--gray-500);
+    }
+    .verify-loading .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--gray-200);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    .no-result {
+      text-align: center;
+      padding: 48px 28px;
+      color: var(--gray-400);
+    }
+    .no-result svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+      opacity: 0.4;
+    }
+    @media (max-width: 580px) {
+      .verify-form { flex-direction: column; }
+      .verify-hero h1 { font-size: 1.6rem; }
+      .verify-hero { padding: 120px 16px 60px; }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <nav class="navbar navbar-scrolled no-print">
+    <div class="container">
+      <a href="index.html" class="navbar-brand">
+        <img src="public/silververse.png" alt="SilverVerse" width="40" height="40" style="border-radius:8px">
+        SilverVerse
+      </a>
+      <button class="mobile-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="navLinks">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <ul class="navbar-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="verify.html" class="active">Verify Ticket</a></li>
+        <li id="navAuth"></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="verify-page" id="main-content">
+    <section class="verify-hero">
+      <div class="container">
+        <h1>Verify Your Ticket</h1>
+        <p>Enter your Registration ID to check the validity and status of your SilverVerse e-ticket.</p>
+        <form class="verify-form" id="verifyForm" role="search" aria-label="Ticket verification">
+          <input type="text" id="verifyInput" placeholder="e.g. VV26-0001" aria-label="Registration ID" required autocomplete="off" autofocus>
+          <button type="submit" class="btn btn-gold">Verify</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="verify-body">
+      <div class="verify-result" id="verifyResult">
+        <div id="verifyContent"></div>
+      </div>
+
+      <div class="no-result" id="noResult" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+        <h3 style="color:var(--gray-600);margin-bottom:8px;">Enter a Registration ID to verify</h3>
+        <p style="font-size:0.9rem;">Your result will appear here.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer no-print">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2026 SilverVerse. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/nav.js"></script>
+  <script src="js/verify.js"></script>
+</body>
+</html>
