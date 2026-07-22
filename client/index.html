@@ -58,11 +58,13 @@
         SilverVerse
       </a>
       <ul class="navbar-links" id="navLinks">
-        <li><a href="#about"><span class="nav-num">01</span> About</a></li>
-        <li><a href="#categories"><span class="nav-num">02</span> Categories</a></li>
+        <li><a href="index.html"><span class="nav-num">01</span> Home</a></li>
+        <li><a href="about.html"><span class="nav-num">02</span> About</a></li>
         <li><a href="events.html"><span class="nav-num">03</span> Events</a></li>
-        <li><a href="videos.html"><span class="nav-num">04</span> Videos</a></li>
-        <li><a href="#faq"><span class="nav-num">05</span> FAQ</a></li>
+        <li><a href="contestants.html"><span class="nav-num">04</span> Contestants</a></li>
+        <li><a href="videos.html"><span class="nav-num">05</span> Videos</a></li>
+        <li><a href="blog.html"><span class="nav-num">06</span> Blog</a></li>
+        <li><a href="contact.html"><span class="nav-num">07</span> Contact</a></li>
         <li class="nav-auth" id="navAuth"></li>
         <li class="nav-cta"><a href="register.html">Register Now</a></li>
       </ul>
@@ -651,19 +653,19 @@
         <div>
           <h4>Quick Links</h4>
           <ul>
-            <li><a href="#about">About</a></li>
-            <li><a href="#categories">Categories</a></li>
-            <li><a href="#highlights">Highlights</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="events.html">Events</a></li>
+            <li><a href="contestants.html">Contestants</a></li>
+            <li><a href="blog.html">Blog</a></li>
             <li><a href="register.html">Register</a></li>
           </ul>
         </div>
         <div>
           <h4>Contact</h4>
-          <ul>
+          <ul id="footerContact">
             <li><a href="mailto:silververse.ng@gmail.com">silververse.ng@gmail.com</a></li>
             <li>08132521005</li>
             <li>09071778724</li>
-            <li><a href="#">@silververse</a></li>
             <li>Orlu, Imo State, Nigeria</li>
           </ul>
         </div>
@@ -688,5 +690,103 @@
 
   <script src="js/nav.js"></script>
   <script src="js/animations.js"></script>
+  <script>
+  (function(){
+    'use strict';
+    var eventId;
+
+    // 1. Load trending event → hero details + countdown
+    fetch('/api/events/trending')
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(data){
+        if(!data||!data.success||!data.data) return;
+        var ev = data.data;
+        eventId = ev.id;
+        var d = ev.event_date ? new Date(ev.event_date) : null;
+        if(d && !isNaN(d.getTime())){
+          var opts = { year:'numeric', month:'long', day:'numeric' };
+          var dateEl = document.querySelector('.hero-detail:nth-child(1) span');
+          if(dateEl) dateEl.textContent = d.toLocaleDateString('en-US', opts);
+          var els = document.querySelectorAll('#countdown, #countdownCta');
+          [].forEach.call(els, function(el){ el.setAttribute('data-target', ev.event_date); });
+          if(window.initCountdown) window.initCountdown();
+        }
+        if(ev.venue){
+          var venueEl = document.querySelector('.hero-detail:nth-child(2) span');
+          if(venueEl) venueEl.textContent = ev.venue;
+        }
+        if(ev.event_time){
+          var timeEl = document.querySelector('.hero-detail:nth-child(3) span');
+          if(timeEl) timeEl.textContent = ev.event_time;
+        }
+      })
+      .catch(function(){});
+
+    // 2. Load roadmap
+    fetch('/api/roadmap')
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(data){
+        if(!data||!data.success||!data.data||!data.data.length) return;
+        var items = data.data;
+        var timeline = document.querySelector('.timeline');
+        if(!timeline) return;
+        timeline.innerHTML = '';
+        items.forEach(function(m, i){
+          var status = m.status || 'upcoming';
+          var statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+          var cls = 'timeline-item';
+          if(status === 'completed') cls += ' completed';
+          else if(status === 'active') cls += ' active';
+          cls += ' reveal' + (i ? ' delay-' + (i+1) : '');
+          timeline.insertAdjacentHTML('beforeend',
+            '<div class="' + cls + '">' +
+              '<div class="timeline-dot"></div>' +
+              '<div class="timeline-date">' + escapeHtml(m.milestone_date||'') + '</div>' +
+              '<div class="timeline-title">' + escapeHtml(m.title||'') + '</div>' +
+              '<div class="timeline-desc">' + escapeHtml(m.description||'') + '</div>' +
+              '<span class="timeline-status ' + status + '">' + statusLabel + '</span>' +
+            '</div>'
+          );
+        });
+      })
+      .catch(function(){});
+
+    // 3. Load contact info → footer
+    fetch('/api/contact')
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(data){
+        if(!data||!data.success||!data.data) return;
+        var c = data.data;
+        var fc = document.getElementById('footerContact');
+        if(!fc) return;
+        var html = '';
+        if(c.email) html += '<li><a href="mailto:' + escapeAttr(c.email) + '">' + escapeHtml(c.email) + '</a></li>';
+        if(c.phone1) html += '<li>' + escapeHtml(c.phone1) + '</li>';
+        if(c.phone2) html += '<li>' + escapeHtml(c.phone2) + '</li>';
+        if(c.address) html += '<li>' + escapeHtml(c.address) + '</li>';
+        if(html) fc.innerHTML = html;
+
+        // update social links
+        var socials = document.querySelectorAll('.footer-social a');
+        if(socials.length && c.social_instagram){
+          socials[0].href = c.social_instagram;
+          if(c.social_twitter && socials[1]) socials[1].href = c.social_twitter;
+          if(c.social_facebook && socials[2]) socials[2].href = c.social_facebook;
+        }
+      })
+      .catch(function(){});
+
+    function escapeHtml(s){
+      if(typeof s !== 'string') return String(s||'');
+      var d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+    function escapeAttr(s){
+      if(typeof s !== 'string') return String(s||'');
+      return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+  })();
+  </script>
 </body>
 </html>

@@ -94,6 +94,23 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
+// GET /contestants — Public: list approved contestants (for contestant page)
+router.get('/contestants', async (req, res) => {
+  try {
+    if (isDBEnabled()) {
+      const sql = getSQL();
+      const rows = await sql`SELECT id, user_id, reg_id, event_id, first_name, last_name, email, phone, category, sub_category, talent, talent_description, profile_image, created_at FROM registrations WHERE category = 'Contestant' ORDER BY created_at DESC`;
+      return res.json({ success: true, data: rows.map(r => camelRow(r)) });
+    }
+    const regs = getMemRegistrations();
+    const contestants = regs.filter(r => r.category === 'Contestant').sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    res.json({ success: true, data: contestants.map(r => camelRow(r)) });
+  } catch (err) {
+    console.error('Contestants error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // GET / — User's own registrations
 router.get('/', requireAuth, async (req, res) => {
   try {

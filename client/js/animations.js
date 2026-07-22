@@ -50,10 +50,19 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* ── Countdown Timer ── */
-  var TARGET_DATE = new Date('2026-08-01T09:00:00+01:00').getTime();
+  var FALLBACK_DATE = new Date('2026-08-01T09:00:00+01:00').getTime();
+
+  function getTargetMs(el) {
+    var attr = el.getAttribute('data-target');
+    if (attr) {
+      var d = new Date(attr);
+      if (!isNaN(d.getTime())) return d.getTime();
+    }
+    return FALLBACK_DATE;
+  }
 
   function renderCountdown(el) {
-    var diff = TARGET_DATE - Date.now();
+    var diff = getTargetMs(el) - Date.now();
     if (diff <= 0) {
       el.innerHTML = '<span class="countdown-expired">Event is Live!</span>';
       return;

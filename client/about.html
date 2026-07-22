@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Events | SilverVerse Voices & Visions Festival 2026</title>
-  <meta name="description" content="Browse upcoming events from SilverVerse. Find festivals, competitions, and community events near you.">
+  <title>About | SilverVerse Voices & Visions Festival 2026</title>
+  <meta name="description" content="Learn about SilverVerse — the platform behind the Voices & Visions Festival. Discover our mission, our story, our team, and how we're discovering talent and inspiring purpose.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700;800&display=swap">
@@ -12,16 +12,16 @@
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/icons.css">
   <link rel="stylesheet" href="css/landing.css">
+  <link rel="stylesheet" href="css/about.css">
 </head>
 <body>
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
-  <!-- SVG Icon Sprite (inline — small UI icons only) -->
+  <!-- SVG Icon Sprite -->
   <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
     <symbol id="icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
     <symbol id="icon-map-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></symbol>
     <symbol id="icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
-    <symbol id="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></symbol>
     <symbol id="icon-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></symbol>
     <symbol id="icon-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></symbol>
     <symbol id="icon-instagram" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></symbol>
@@ -30,7 +30,7 @@
     <symbol id="icon-arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></symbol>
   </svg>
 
-  <!-- Navbar (auth state managed by nav.js) -->
+  <!-- Navbar -->
   <nav class="navbar navbar-scrolled no-print" id="mainNav">
     <div class="container">
       <a href="index.html" class="navbar-brand">
@@ -39,8 +39,8 @@
       </a>
       <ul class="navbar-links" id="navLinks">
         <li><a href="index.html">Home</a></li>
-        <li><a href="about.html">About</a></li>
-        <li><a href="events.html" class="active">Events</a></li>
+        <li><a href="about.html" class="active">About</a></li>
+        <li><a href="events.html">Events</a></li>
         <li><a href="contestants.html">Contestants</a></li>
         <li><a href="videos.html">Videos</a></li>
         <li><a href="blog.html">Blog</a></li>
@@ -55,48 +55,17 @@
   </nav>
 
   <main id="main-content">
-    <!-- ═══════════════════════════════════════
-         HERO SECTION
-         ═══════════════════════════════════════ -->
-    <section class="hero" style="min-height:auto;padding:var(--header-height) 0 60px;">
-      <div class="hero-bg">
-        <img src="assets/images/hero-concert.jpg" alt="SilverVerse events" width="1920" height="1080" loading="eager">
-        <div class="hero-overlay"></div>
-      </div>
-      <div class="container hero-content" style="text-align:center;max-width:700px;margin:0 auto;">
-        <div class="hero-eyebrow">What's Happening</div>
-        <h1>Our <span class="accent-gold">Events</span></h1>
-        <p class="hero-tagline" style="margin:16px auto 0;">Discover festivals, competitions, and community events. Stay connected and never miss an opportunity.</p>
+    <section id="aboutContent">
+      <div class="about-loader" id="aboutLoader">
+        <div class="about-spinner"></div>
+        <p>Loading about page...</p>
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════
-         EVENTS GRID
-         ═══════════════════════════════════════ -->
-    <section class="events-section" style="background:var(--off-white);padding:80px 0;">
-      <div class="container">
-        <div class="section-header">
-          <div class="section-eyebrow">Browse Events</div>
-          <h2 style="font-size:2rem;">Upcoming &amp; Past Events</h2>
-          <p class="section-desc">All events hosted by SilverVerse</p>
-          <div class="section-divider"></div>
-        </div>
-        <div id="eventsGrid" class="events-grid">
-          <div class="events-loading" id="eventsLoading">
-            <div class="events-spinner"></div>
-            <p>Loading events...</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══════════════════════════════════════
-         CTA
-         ═══════════════════════════════════════ -->
     <section class="cta-section">
       <div class="container">
-        <h2>Don't Miss Out</h2>
-        <p class="section-desc">Register for the Voices &amp; Visions Festival 2026 and be part of something extraordinary.</p>
+        <h2>Join the Movement</h2>
+        <p class="section-desc">Be part of the Voices &amp; Visions Festival 2026. Register now and take your place on the grand stage.</p>
         <a href="register.html" class="btn btn-premium">
           Register Now
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
@@ -105,9 +74,7 @@
     </section>
   </main>
 
-  <!-- ═══════════════════════════════════════
-       FOOTER
-       ═══════════════════════════════════════ -->
+  <!-- Footer -->
   <footer class="footer no-print">
     <div class="container">
       <div class="footer-content">
@@ -124,9 +91,9 @@
           <h4>Quick Links</h4>
           <ul>
             <li><a href="index.html">Home</a></li>
+            <li><a href="about.html">About</a></li>
             <li><a href="events.html">Events</a></li>
             <li><a href="register.html">Register</a></li>
-            <li><a href="login.html">Login</a></li>
           </ul>
         </div>
         <div>
@@ -159,6 +126,159 @@
   </button>
 
   <script src="js/nav.js"></script>
-  <script src="js/events.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var container = document.getElementById('aboutContent');
+    var loader = document.getElementById('aboutLoader');
+
+    fetch('/api/about')
+      .then(function(res) {
+        if (!res.ok) throw new Error('Failed to load about page');
+        return res.json();
+      })
+      .then(function(data) {
+        var sections = data.sections || data.data || data;
+        if (!Array.isArray(sections)) sections = [sections];
+
+        if (loader) loader.remove();
+
+        var html = '';
+        for (var i = 0; i < sections.length; i++) {
+          html += renderSection(sections[i]);
+        }
+        container.innerHTML = html;
+
+        // Re-run scroll reveal on new elements
+        if (window.observeReveal) window.observeReveal();
+      })
+      .catch(function(err) {
+        if (loader) {
+          loader.innerHTML =
+            '<div class="about-error"><h3>Unable to load content</h3><p>Please try again later.</p></div>';
+        }
+      });
+
+    function renderSection(section) {
+      var key = section.sectionKey || '';
+      var title = section.title || '';
+      var content = section.content || '';
+      var imageUrl = section.imageUrl || '';
+
+      switch (key) {
+        case 'hero':
+          return (
+            '<section class="about-hero">' +
+              '<div class="container">' +
+                '<h1>' + esc(title) + '</h1>' +
+                (content ? '<p>' + esc(content) + '</p>' : '') +
+              '</div>' +
+            '</section>'
+          );
+
+        case 'mission':
+          return (
+            '<section class="about-mission">' +
+              '<div class="container">' +
+                '<div class="mission-grid">' +
+                  '<div class="mission-text">' +
+                    '<h2>' + esc(title) + '</h2>' +
+                    '<p>' + esc(content) + '</p>' +
+                  '</div>' +
+                  (imageUrl
+                    ? '<div class="mission-image"><img src="' + escAttr(imageUrl) + '" alt="' + escAttr(title) + '" loading="lazy"></div>'
+                    : '') +
+                '</div>' +
+              '</div>' +
+            '</section>'
+          );
+
+        case 'story':
+          return (
+            '<section class="about-story dark-section">' +
+              '<div class="container">' +
+                '<div class="story-content">' +
+                  '<h2>' + esc(title) + '</h2>' +
+                  '<p>' + esc(content) + '</p>' +
+                  (imageUrl
+                    ? '<div class="story-image"><img src="' + escAttr(imageUrl) + '" alt="' + escAttr(title) + '" loading="lazy"></div>'
+                    : '') +
+                '</div>' +
+              '</div>' +
+            '</section>'
+          );
+
+        case 'team':
+          var teamCards = '';
+          if (section.members && Array.isArray(section.members)) {
+            for (var j = 0; j < section.members.length; j++) {
+              var m = section.members[j];
+              teamCards +=
+                '<div class="team-card reveal delay-' + ((j % 8) + 1) + '">' +
+                  (m.imageUrl ? '<img src="' + escAttr(m.imageUrl) + '" alt="' + escAttr(m.name) + '" loading="lazy">' : '') +
+                  '<div class="team-card-body">' +
+                    '<h3>' + esc(m.name) + '</h3>' +
+                    (m.role ? '<div class="team-role">' + esc(m.role) + '</div>' : '') +
+                    (m.bio ? '<p>' + esc(m.bio) + '</p>' : '') +
+                  '</div>' +
+                '</div>';
+            }
+          }
+          return (
+            '<section class="about-team">' +
+              '<div class="container">' +
+                '<div class="section-header">' +
+                  '<div class="section-eyebrow">Our Team</div>' +
+                  '<h2>' + esc(title) + '</h2>' +
+                  (content ? '<p class="section-desc">' + esc(content) + '</p>' : '') +
+                  '<div class="section-divider"></div>' +
+                '</div>' +
+                (teamCards ? '<div class="team-grid">' + teamCards + '</div>' : '') +
+              '</div>' +
+            '</section>'
+          );
+
+        case 'cta':
+          return (
+            '<section class="about-cta cta-section">' +
+              '<div class="container">' +
+                '<h2>' + esc(title) + '</h2>' +
+                (content ? '<p class="section-desc">' + esc(content) + '</p>' : '') +
+                '<a href="register.html" class="btn btn-premium">' +
+                  'Get Involved' +
+                  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>' +
+                '</a>' +
+              '</div>' +
+            '</section>'
+          );
+
+        default:
+          return (
+            '<section class="about-generic">' +
+              '<div class="container">' +
+                (title ? '<h2>' + esc(title) + '</h2>' : '') +
+                (content ? '<p>' + esc(content) + '</p>' : '') +
+                (imageUrl
+                  ? '<img src="' + escAttr(imageUrl) + '" alt="' + escAttr(title) + '" loading="lazy" style="margin-top:24px;border-radius:var(--radius-lg);width:100%;max-height:400px;object-fit:cover;">'
+                  : '') +
+              '</div>' +
+            '</section>'
+          );
+      }
+    }
+
+    function esc(str) {
+      if (!str) return '';
+      var d = document.createElement('div');
+      d.appendChild(document.createTextNode(str));
+      return d.innerHTML;
+    }
+
+    function escAttr(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+  });
+  </script>
+  <script src="js/animations.js"></script>
 </body>
 </html>
