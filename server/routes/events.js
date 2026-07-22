@@ -10,11 +10,38 @@ function camelRow(row) {
     name: row.name,
     description: row.description || '',
     eventDate: row.event_date || row.eventDate || null,
+    eventTime: row.event_time || row.eventTime || '09:00:00',
     venue: row.venue || '',
     status: row.status || 'upcoming',
+    isTrending: row.is_trending || row.isTrending || false,
     createdAt: row.created_at || row.createdAt || '',
   };
 }
+
+// GET /trending — Get trending event (public)
+router.get('/trending', async (req, res) => {
+  try {
+    if (isDBEnabled()) {
+      const sql = getSQL();
+      const result = await sql`SELECT * FROM events WHERE is_trending = true LIMIT 1`;
+      if (result.length === 0) {
+        const first = await sql`SELECT * FROM events ORDER BY id ASC LIMIT 1`;
+        if (first.length === 0) return res.status(404).json({ success: false, message: 'No events found' });
+        return res.json({ success: true, data: camelRow(first[0]) });
+      }
+      res.json({ success: true, data: camelRow(result[0]) });
+    } else {
+      const events = getMemEvents();
+      let trending = events.find(e => e.is_trending);
+      if (!trending) trending = events[0];
+      if (!trending) return res.status(404).json({ success: false, message: 'No events found' });
+      res.json({ success: true, data: camelRow(trending) });
+    }
+  } catch (err) {
+    console.error('Trending event error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 // GET / — List all events (public)
 router.get('/', async (req, res) => {

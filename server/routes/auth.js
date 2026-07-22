@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const router = express.Router();
 const { getSQL, isDBEnabled, getMemUsers, getNextUserId } = require('../db');
+const { requireAuth } = require('../middleware/auth');
 
 // POST /check-username
 router.post('/check-username', async (req, res) => {
@@ -250,6 +251,82 @@ router.post('/reset-password', async (req, res) => {
     }
   } catch (err) {
     console.error('Reset password error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// PUT /update - Update user profile (display name, email, phone, password)
+router.put('/update', requireAuth, async (req, res) => {
+  try {
+    const { displayName, email, phone, currentPassword, newPassword } = req.body;
+    const userId = req.session.userId;
+
+    if (isDBEnabled()) {
+      const sql = getSQL();
+      const user = await sql`SELECT * FROM users WHERE id = ${userId}`;
+      if (user.length === 0) return res.status(404).json({ success: false, message: 'User not found' });
+
+      let updates = [];
+      let values = [];
+
+      if (displayName) {
+        updates.push('display_name');
+        values.push(displayName);
+      }
+      if (email) {
+        updates.push('email');
+        values.push(email.toLowerCase());
+      }
+      if (phone) {
+        updates.push('phone');
+        values.push(phone);
+      }
+
+      if (newPassword) {
+        if (!currentPassword) return res.status(400).json({ success: false, message: 'Current password required to set new password' });
+        const valid = bcrypt.compareSync(currentPassword, user[0].password_hash);
+        if (!valid) return res.status(403).json({ success: false, message: 'Current password is incorrect' });
+        const hash = bcrypt.hashSync(newPassword, 10);
+        updates.push('password_hash');
+        values.push(hash);
+      }
+
+      if (updates.length > 0) {
+        const setClauses = updates.map((col, i) => `${col} = $${i + 1}`).join(', ');
+        values.push(userId);
+        await sql.unsafe(`UPDATE users SET ${setClauses}, updated_at = NOW() WHERE id = $${values.length}`, values);
+      }
+
+      const updated = await sql`SELECT id, username, email, phone, display_name, role, profile_image FROM users WHERE id = ${userId}`;
+      const u = updated[0];
+      res.json({
+        success: true,
+        user: { id: u.id, username: u.username, email: u.email, phone: u.phone, role: u.role, displayName: u.display_name, profileImage: u.profile_image }
+      });
+    } else {
+      const users = getMemUsers();
+      const user = users.find(u => u.id === userId);
+      if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+      if (displayName) user.display_name = displayName;
+      if (email) user.email = email.toLowerCase();
+      if (phone) user.phone = phone;
+
+      if (newPassword) {
+        if (!currentPassword) return res.status(400).json({ success: false, message: 'Current password required' });
+        const valid = bcrypt.compareSync(currentPassword, user.password_hash);
+        if (!valid) return res.status(403).json({ success: false, message: 'Current password is incorrect' });
+        user.password_hash = bcrypt.hashSync(newPassword, 10);
+      }
+
+      user.updated_at = new Date().toISOString();
+      res.json({
+        success: true,
+        user: { id: user.id, username: user.username, email: user.email, phone: user.phone, role: user.role, displayName: user.display_name, profileImage: user.profile_image }
+      });
+    }
+  } catch (err) {
+    console.error('Update user error:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 });

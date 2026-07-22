@@ -162,6 +162,7 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/verify', require('./routes/verify'));
 app.use('/api/events', require('./routes/events'));
 app.use('/api/videos', require('./routes/videos'));
+app.use('/api', require('./routes/content'));
 
 // ── QR Code (public) ──
 app.get('/api/qr/:id', async (req, res) => {

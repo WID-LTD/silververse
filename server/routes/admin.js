@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { requireAdmin } = require('../middleware/auth');
-const { getSQL, isDBEnabled, getMemUsers, getMemRegistrations, getMemEvents } = require('../db');
+const { getSQL, isDBEnabled, getMemUsers, getMemRegistrations, getMemEvents, getMemRoadmapMilestones, getMemContactSettings, getMemAboutContent, getMemVideos } = require('../db');
+const bcrypt = require('bcrypt');
 
 function camelRow(row) {
   if (!row) return null;
@@ -464,6 +465,284 @@ router.delete('/registrations/:id', requireAdmin, async (req, res) => {
     console.error('Delete registration error:', err);
     res.status(500).json({ success: false, message: err.message });
   }
+});
+
+// ═══════════════════════════════════════
+// ROADMAP CRUD
+// ═══════════════════════════════════════
+
+// GET /roadmap/:eventId — List milestones for an event
+router.get('/roadmap/:eventId', requireAdmin, async (req, res) => {
+  try {
+    const eventId = parseInt(req.params.eventId);
+    if (isDBEnabled()) {
+      const sql = getSQL();
+      const rows = await sql`SELECT * FROM roadmap_milestones WHERE event_id = ${eventId} ORDER BY sort_order ASC`;
+      return res.json({ success: true, data: rows.map(r => ({ id: r.id, eventId: r.event_id, title: r.title, description: r.description, milestoneDate: r.milestone_date, status: r.status, sortOrder: r.sort_order })) });
+    }
+    const list = getMemRoadmapMilestones().filter(m => m.event_id === eventId).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    res.json({ success: true, data: list });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// POST /roadmap — Create milestone
+router.post('/roadmap', requireAdmin, async (req, res) => {
+  try {
+    const { eventId, title, description, milestoneDate, status, sortOrder } = req.body;
+    if (!title) return res.status(400).json({ success: false, message: 'Title required' });
+    if (isDBEnabled()) {
+      const sql = getSQL();
+      const result = await sql`
+        INSERT INTO roadmap_milestones (event_id, title, description, milestone_date, status, sort_order)
+        VALUES (${eventId || null}, ${title}, ${description || ''}, ${milestoneDate || ''}, ${status || 'upcoming'}, ${sortOrder || 0})
+        RETURNING *
+      `;
+      return res.json({ success: true, data: result[0] });
+    }
+    const list = getMemRoadmapMilestones();
+    const id = list.length + 1;
+    list.push({ id, event_id: eventId, title, description: description || '', milestone_date: milestoneDate || '', status: status || 'upcoming', sort_order: sortOrder || 0, created_at: new Date().toISOString() });
+    res.json({ success: true, data: list[list.length - 1] });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// PUT /roadmap/:id — Update milestone
+router.put('/roadmap/:id', requireAdmin, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { title, description, milestoneDate, status, sortOrder } = req.body;
+    if (isDBEnabled()) {
+      const sql = getSQL();
+      const result = await sql`
+        UPDATE roadmap_milestones SET title = COALESCE(${title}, title), description = COALESCE(${description}, description), milestone_date = COALESCE(${milestoneDate || null}, milestone_date), status = COALESCE(${status}, status), sort_order = COALESCE(${sortOrder}, sort_order)
+        WHERE id = ${id} RETURNING *
+      `;
+      if (result.length === 0) return res.status(404).json({ success: false, message: 'Milestone not found' });
+      return res.json({ success: true, data: result[0] });
+    }
+    const list = getMemRoadmapMilestones();
+    const idx = list.findIndex(m => m.id === id);
+    if (idx === -1) return res.status(404).json({ success: false, message: 'Milestone not found' });
+    if (title !== undefined) list[idx].title = title;
+    if (description !== undefined) list[idx].description = description;
+    if (milestoneDate !== undefined) list[idx].milestone_date = milestoneDate;
+    if (status !== undefined) list[idx].status = status;
+    if (sortOrder !== undefined) list[idx].sort_order = sortOrder;
+    res.json({ success: true, data: list[idx] });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// DELETE /roadmap/:id — Delete milestone
+router.delete('/roadmap/:id', requireAdmin, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isDBEnabled()) {
+      const sql = getSQL();
+      const result = await sql`DELETE FROM roadmap_milestones WHERE id = ${id} RETURNING id, title`;
+      if (result.length === 0) return res.status(404).json({ success: false, message: 'Milestone not found' });
+      return res.json({ success: true, message: `Milestone "${result[0].title}" deleted` });
+    }
+    const list = getMemRoadmapMilestones();
+    const idx = list.findIndex(m => m.id === id);
+    if (idx === -1) return res.status(404).json({ success: false, message: 'Milestone not found' });
+    list.splice(idx, 1);
+    res.json({ success: true, message: 'Milestone deleted' });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// ═══════════════════════════════════════
+// CONTACT SETTINGS
+// ═══════════════════════════════════════
+
+// GET /contact-settings
+router.get('/contact-settings', requireAdmin, async (req, res) => {
+  try {
+    const result = {};
+    if (isDBEnabled()) {
+      const sql = getSQL();
+      const rows = await sql`SELECT key, value FROM contact_settings`;
+      for (const r of rows) result[r.key] = r.value;
+    } else {
+      for (const s of getMemContactSettings()) result[s.key] = s.value;
+    }
+    res.json({ success: true, data: result });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// PUT /contact-settings — Update contact settings
+router.put('/contact-settings', requireAdmin, async (req, res) => {
+  try {
+    const settings = req.body;
+    if (isDBEnabled()) {
+      const sql = getSQL();
+      for (const [key, value] of Object.entries(settings)) {
+        await sql`
+          INSERT INTO contact_settings (key, value) VALUES (${key}, ${String(value)})
+          ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+        `;
+      }
+      return res.json({ success: true, message: 'Contact settings updated' });
+    }
+    const list = getMemContactSettings();
+    for (const [key, value] of Object.entries(settings)) {
+      const existing = list.find(s => s.key === key);
+      if (existing) existing.value = String(value);
+      else list.push({ id: list.length + 1, key, value: String(value), updated_at: new Date().toISOString() });
+    }
+    res.json({ success: true, message: 'Contact settings updated' });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// ═══════════════════════════════════════
+// ABOUT CONTENT
+// ═══════════════════════════════════════
+
+// GET /about
+router.get('/about', requireAdmin, async (req, res) => {
+  try {
+    if (isDBEnabled()) {
+      const sql = getSQL();
+      const rows = await sql`SELECT * FROM about_content ORDER BY id ASC`;
+      return res.json({ success: true, data: rows });
+    }
+    res.json({ success: true, data: getMemAboutContent() });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// PUT /about — Update about section
+router.put('/about', requireAdmin, async (req, res) => {
+  try {
+    const { sectionKey, title, content, imageUrl } = req.body;
+    if (!sectionKey) return res.status(400).json({ success: false, message: 'sectionKey required' });
+    if (isDBEnabled()) {
+      const sql = getSQL();
+      await sql`
+        INSERT INTO about_content (section_key, title, content, image_url)
+        VALUES (${sectionKey}, ${title || ''}, ${content || ''}, ${imageUrl || ''})
+        ON CONFLICT (section_key) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content, image_url = EXCLUDED.image_url, updated_at = NOW()
+      `;
+      return res.json({ success: true, message: 'About section updated' });
+    }
+    const list = getMemAboutContent();
+    const existing = list.find(s => s.section_key === sectionKey);
+    if (existing) {
+      if (title !== undefined) existing.title = title;
+      if (content !== undefined) existing.content = content;
+      if (imageUrl !== undefined) existing.image_url = imageUrl;
+      existing.updated_at = new Date().toISOString();
+    } else {
+      list.push({ id: list.length + 1, section_key: sectionKey, title, content, image_url: imageUrl || '', updated_at: new Date().toISOString() });
+    }
+    res.json({ success: true, message: 'About section updated' });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// ═══════════════════════════════════════
+// BLOG CRUD
+// ═══════════════════════════════════════
+
+// GET /blog — List all posts (including unpublished)
+router.get('/blog', requireAdmin, async (req, res) => {
+  try {
+    if (isDBEnabled()) {
+      const sql = getSQL();
+      const rows = await sql`
+        SELECT bp.*, u.display_name as author_name
+        FROM blog_posts bp LEFT JOIN users u ON bp.author_id = u.id
+        ORDER BY bp.created_at DESC
+      `;
+      return res.json({ success: true, data: rows });
+    }
+    res.json({ success: true, data: [] });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// POST /blog — Create post
+router.post('/blog', requireAdmin, async (req, res) => {
+  try {
+    const { title, content, excerpt, featuredImage, published } = req.body;
+    if (!title) return res.status(400).json({ success: false, message: 'Title required' });
+    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now();
+    const authorId = req.session.userId;
+    if (isDBEnabled()) {
+      const sql = getSQL();
+      const result = await sql`
+        INSERT INTO blog_posts (title, slug, content, excerpt, featured_image, author_id, published, published_at)
+        VALUES (${title}, ${slug}, ${content || ''}, ${excerpt || ''}, ${featuredImage || ''}, ${authorId}, ${!!published}, ${published ? new Date() : null})
+        RETURNING id, title, slug
+      `;
+      return res.json({ success: true, data: result[0] });
+    }
+    res.json({ success: true, data: { id: 1, title, slug } });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// PUT /blog/:id — Update post
+router.put('/blog/:id', requireAdmin, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { title, content, excerpt, featuredImage, published } = req.body;
+    if (isDBEnabled()) {
+      const sql = getSQL();
+      let slug = null;
+      if (title) slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + id;
+      const result = await sql`
+        UPDATE blog_posts SET
+          title = COALESCE(${title}, title),
+          slug = COALESCE(${slug}, slug),
+          content = COALESCE(${content}, content),
+          excerpt = COALESCE(${excerpt}, excerpt),
+          featured_image = COALESCE(${featuredImage}, featured_image),
+          published = COALESCE(${published !== undefined ? published : null}, published),
+          published_at = CASE WHEN ${published} = true AND published_at IS NULL THEN NOW() ELSE published_at END,
+          updated_at = NOW()
+        WHERE id = ${id} RETURNING id, title, slug
+      `;
+      if (result.length === 0) return res.status(404).json({ success: false, message: 'Post not found' });
+      return res.json({ success: true, data: result[0] });
+    }
+    res.json({ success: true, message: 'Post updated' });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// DELETE /blog/:id — Delete post
+router.delete('/blog/:id', requireAdmin, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isDBEnabled()) {
+      const sql = getSQL();
+      const result = await sql`DELETE FROM blog_posts WHERE id = ${id} RETURNING id, title`;
+      if (result.length === 0) return res.status(404).json({ success: false, message: 'Post not found' });
+      return res.json({ success: true, message: `Post "${result[0].title}" deleted` });
+    }
+    res.json({ success: true, message: 'Post deleted' });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// ═══════════════════════════════════════
+// USER MANAGEMENT (Admin)
+// ═══════════════════════════════════════
+
+// PUT /users/:id/password — Admin changes user password
+router.put('/users/:id/password', requireAdmin, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    const hash = bcrypt.hashSync(newPassword, 10);
+    if (isDBEnabled()) {
+      const sql = getSQL();
+      const result = await sql`UPDATE users SET password_hash = ${hash}, updated_at = NOW() WHERE id = ${userId} RETURNING id, username`;
+      if (result.length === 0) return res.status(404).json({ success: false, message: 'User not found' });
+      return res.json({ success: true, message: `Password updated for "${result[0].username}"` });
+    }
+    const users = getMemUsers();
+    const user = users.find(u => u.id === userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    user.password_hash = hash;
+    user.updated_at = new Date().toISOString();
+    res.json({ success: true, message: `Password updated for "${user.username}"` });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
 
 module.exports = router;

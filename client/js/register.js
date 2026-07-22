@@ -27,6 +27,8 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   var currentStep = 1;
+  var isAuth = false;
+  var authUser = null;
   var registrationData = {
     cta: cta,
     category: '',
@@ -43,6 +45,25 @@ document.addEventListener('DOMContentLoaded', function () {
     ticketType: 'Regular',
     amount: 1000
   };
+
+  // ── Auth Check ──
+  async function checkAuth() {
+    try {
+      var res = await fetch('/api/auth/me', { credentials: 'same-origin' });
+      var data = await res.json();
+      if (data.success && data.user) {
+        isAuth = true;
+        authUser = data.user;
+        var nameParts = (authUser.displayName || authUser.username || '').split(' ');
+        registrationData.firstName = nameParts[0] || '';
+        registrationData.lastName = nameParts.slice(1).join(' ') || '';
+        registrationData.email = authUser.email || '';
+        registrationData.phone = authUser.phone || '';
+        var step4Label = document.querySelector('.step-item[data-step="4"] .step-label');
+        if (step4Label) step4Label.textContent = 'Confirm';
+      }
+    } catch (_e) {}
+  }
 
   // ── STEP 1: Category Selection ──
   function renderStep1() {
@@ -287,9 +308,35 @@ document.addEventListener('DOMContentLoaded', function () {
       '</div>';
   }
 
-  // ── STEP 4: Account Setup ──
+  // ── STEP 4: Account Setup / Confirm ──
   function renderStep4() {
     var step4 = document.getElementById('step4');
+
+    if (isAuth) {
+      step4.innerHTML = '' +
+        '<h2>Confirm Registration</h2>' +
+        '<p class="step-desc">Review and confirm your registration</p>' +
+        '<div class="payment-summary-card">' +
+          '<div class="summary-header"><span class="summary-label">Registration Summary</span></div>' +
+          '<div class="summary-row"><span class="label">Category</span><span class="value">' + escapeHtml(registrationData.subCategory || registrationData.category || 'N/A') + '</span></div>' +
+          '<div class="summary-row"><span class="label">Ticket Type</span><span class="value">' + escapeHtml(registrationData.ticketType) + '</span></div>' +
+          '<div class="summary-row"><span class="label">Name</span><span class="value">' + escapeHtml(registrationData.firstName + ' ' + registrationData.lastName) + '</span></div>' +
+          '<div class="summary-row"><span class="label">Email</span><span class="value">' + escapeHtml(registrationData.email) + '</span></div>' +
+          '<div class="summary-total"><span class="label">Total</span><span class="amount">&#8358;' + (registrationData.amount || 1000).toLocaleString() + '</span></div>' +
+        '</div>' +
+        '<div class="form-group" style="margin-top:20px;">' +
+          '<label class="checkbox-wrap" style="display:flex;align-items:center;gap:8px;cursor:pointer;">' +
+            '<input type="checkbox" id="agree" required style="width:16px;height:16px;accent-color:var(--primary);cursor:pointer;">' +
+            '<span style="font-size:0.85rem;color:var(--gray-600);">I agree to the <a href="#" onclick="event.preventDefault();openTCModal();" style="color:var(--primary);text-decoration:underline;">terms and conditions</a> *</span>' +
+          '</label>' +
+        '</div>' +
+        '<div class="form-actions">' +
+          '<button type="button" class="btn btn-outline" onclick="window._goToStep(3)">&larr; Back</button>' +
+          '<button type="button" class="btn btn-primary" id="createAccountBtn" onclick="window._submitRegistration()">Get My Ticket &rarr;</button>' +
+        '</div>';
+      return;
+    }
+
     step4.innerHTML = '' +
       '<h2>Set Up Your Account</h2>' +
       '<p class="step-desc">Create your SilverVerse account</p>' +
@@ -331,7 +378,8 @@ document.addEventListener('DOMContentLoaded', function () {
         '</button>' +
       '</div>';
 
-    // Password toggle for step 4
+    // Password toggle for step 4 (non-auth only)
+    if (!isAuth) {
     step4.querySelectorAll('.password-toggle').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var field = this.closest('.password-field');
@@ -384,6 +432,7 @@ document.addEventListener('DOMContentLoaded', function () {
           });
       }, 500);
     });
+    }
   }
 
   // ── Navigation ──
@@ -548,24 +597,22 @@ document.addEventListener('DOMContentLoaded', function () {
               payBtn.disabled = false;
               payBtn.innerHTML = 'Pay &#8358;' + amount.toLocaleString() + ' &rarr;';
             }
-            showToast('Payment cancelled. You can still proceed to create your account.', 'warning');
+            showToast('Payment cancelled.', 'warning');
           }
         });
       } catch (_e) {
-        showToast('Payment error. Proceeding to account setup...', 'warning');
+        showToast('Payment error. Please try again.', 'error');
         if (payBtn) {
           payBtn.disabled = false;
           payBtn.innerHTML = 'Pay &#8358;' + amount.toLocaleString() + ' &rarr;';
         }
-        window._goToStep(4);
       }
     } else {
-      showToast('Payment will be handled after account creation. Proceeding...', 'info');
+      showToast('Payment gateway not configured. Contact support.', 'error');
       if (payBtn) {
         payBtn.disabled = true;
-        payBtn.textContent = 'Processing...';
+        payBtn.textContent = 'Payment Unavailable';
       }
-      setTimeout(function () { window._goToStep(4); }, 1200);
     }
   };
 
@@ -650,6 +697,47 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   };
 
+  // ── Submit Registration (Auth users) ──
+  window._submitRegistration = async function () {
+    var agree = document.getElementById('agree') ? document.getElementById('agree').checked : false;
+    if (!agree) { showToast('Please agree to the terms and conditions', 'error'); return; }
+    var btn = document.getElementById('createAccountBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="btn-text">Submitting...</span>'; }
+    try {
+      var regRes = await fetch('/api/registrations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          category: registrationData.category,
+          subCategory: registrationData.subCategory || registrationData.volunteerArea || registrationData.speakerType || '',
+          ticketType: registrationData.ticketType,
+          firstName: registrationData.firstName,
+          lastName: registrationData.lastName,
+          email: registrationData.email,
+          phone: registrationData.phone,
+          talent: registrationData.talent || registrationData.subCategory || '',
+          talentDescription: registrationData.talentDescription,
+          perfTime: registrationData.perfTime,
+          amount: registrationData.amount
+        })
+      });
+      var regData = await regRes.json();
+      if (!regData.success) throw new Error(regData.message || 'Registration failed');
+      document.getElementById('stepForm').style.display = 'none';
+      var stepBar = document.querySelector('.step-bar');
+      if (stepBar) stepBar.style.display = 'none';
+      var success = document.getElementById('registerSuccess');
+      success.style.display = 'block';
+      document.getElementById('displayRegId').textContent = regData.regId;
+      showToast('Registration successful!');
+      setTimeout(function () { window.location.href = 'dashboard.html'; }, 3000);
+    } catch (err) {
+      showToast(err.message, 'error');
+      if (btn) { btn.disabled = false; btn.innerHTML = 'Get My Ticket &rarr;'; }
+    }
+  };
+
   // ── Helpers ──
   function setupFileUpload() {
     var upload = document.getElementById('profileUpload');
@@ -693,5 +781,5 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // ── Initialize ──
-  renderStep1();
+  checkAuth().then(function () { renderStep1(); });
 });

@@ -3,10 +3,9 @@ const router = express.Router();
 const multer = require('multer');
 const crypto = require('crypto');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
-const { getSQL, isDBEnabled } = require('../db');
+const { getSQL, isDBEnabled, getMemVideos } = require('../db');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
 
-const memVideos = [];
 let memVideoCounter = 0;
 
 const R2_ENABLED = !!process.env.R2_ENDPOINT;
@@ -62,7 +61,7 @@ router.get('/', async (req, res) => {
       }
       res.json({ success: true, data: result.map(camelRow) });
     } else {
-      let filtered = [...memVideos];
+      let filtered = [...getMemVideos()];
       if (category) {
         filtered = filtered.filter(v => v.category === category);
       }
@@ -84,7 +83,7 @@ router.get('/:id', async (req, res) => {
       if (result.length === 0) return res.status(404).json({ success: false, message: 'Video not found' });
       res.json({ success: true, data: camelRow(result[0]) });
     } else {
-      const video = memVideos.find(v => v.id === parseInt(req.params.id));
+      const video = getMemVideos().find(v => v.id === parseInt(req.params.id));
       if (!video) return res.status(404).json({ success: false, message: 'Video not found' });
       res.json({ success: true, data: camelRow(video) });
     }
@@ -124,7 +123,7 @@ router.post('/', requireAdmin, async (req, res) => {
         sort_order: sortOrder || 0,
         created_at: new Date().toISOString(),
       };
-      memVideos.push(video);
+      getMemVideos().push(video);
       res.json({ success: true, data: camelRow(video) });
     }
   } catch (err) {
@@ -160,7 +159,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
       `;
       res.json({ success: true, data: camelRow(result[0]) });
     } else {
-      const video = memVideos.find(v => v.id === parseInt(req.params.id));
+      const video = getMemVideos().find(v => v.id === parseInt(req.params.id));
       if (!video) return res.status(404).json({ success: false, message: 'Video not found' });
 
       if (eventId !== undefined) video.event_id = eventId;
@@ -190,9 +189,9 @@ router.delete('/:id', requireAdmin, async (req, res) => {
       if (result.length === 0) return res.status(404).json({ success: false, message: 'Video not found' });
       res.json({ success: true, message: `Video "${result[0].title}" deleted` });
     } else {
-      const idx = memVideos.findIndex(v => v.id === parseInt(req.params.id));
+      const idx = getMemVideos().findIndex(v => v.id === parseInt(req.params.id));
       if (idx === -1) return res.status(404).json({ success: false, message: 'Video not found' });
-      const deleted = memVideos.splice(idx, 1)[0];
+      const deleted = getMemVideos().splice(idx, 1)[0];
       res.json({ success: true, message: `Video "${deleted.title}" deleted` });
     }
   } catch (err) {
@@ -246,7 +245,7 @@ router.post('/upload', requireAdmin, videoUpload.single('video'), async (req, re
         sort_order: sortOrder || 0,
         created_at: new Date().toISOString(),
       };
-      memVideos.push(video);
+      getMemVideos().push(video);
       res.json({ success: true, data: camelRow(video) });
     }
   } catch (err) {

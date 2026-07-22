@@ -29,9 +29,19 @@
       var user = data.user || data;
 
       var displayName = user.displayName || user.username || user.email || 'Account';
+      var initial = (displayName.charAt(0) || 'U').toUpperCase();
+      var profileImg = user.profileImage || '';
       var html = '';
 
-      html += '<span class="nav-user-badge" title="' + escapeAttr(displayName) + '">' + escapeHtml(displayName) + '</span>';
+      if (profileImg) {
+        html += '<span class="nav-user-badge" title="' + escapeAttr(displayName) + '">';
+        html += '<img src="' + escapeAttr(profileImg) + '" alt="" class="nav-avatar-img" width="28" height="28">';
+        html += '<span class="nav-avatar-name">' + escapeHtml(displayName) + '</span></span>';
+      } else {
+        html += '<span class="nav-user-badge" title="' + escapeAttr(displayName) + '">';
+        html += '<span class="nav-avatar-initial">' + escapeHtml(initial) + '</span>';
+        html += '<span class="nav-avatar-name">' + escapeHtml(displayName) + '</span></span>';
+      }
       html += '<a href="dashboard.html">Dashboard</a>';
 
       if (user.role === 'admin' || user.isAdmin) {
@@ -48,7 +58,8 @@
       }
     } catch (_err) {
       authContainer.innerHTML =
-        '<a href="login.html">Login</a>';
+        '<a href="login.html" class="nav-login-link">Login</a>' +
+        '<a href="register.html" class="nav-register-link">Register</a>';
     }
   }
 
