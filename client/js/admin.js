@@ -34,6 +34,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     setupSidebar();
     setupLogout();
     setupModal();
+    bindAddRoadmap();
+    bindContactForm();
+    bindAboutForm();
+    bindAddBlog();
     navigateTo(getHash() || 'dashboard');
     loadDashboard();
   } catch (err) {
@@ -991,7 +995,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       .then(function (d) { if (d.success) { toast(d.message); fetchRoadmap(); } else toast(d.message, 'error'); });
   };
 
-  document.addEventListener('DOMContentLoaded', function () {
+  function bindAddRoadmap() {
     var addBtn = document.getElementById('addRoadmapBtn');
     if (addBtn) {
       addBtn.addEventListener('click', function () {
@@ -1009,7 +1013,7 @@ document.addEventListener('DOMContentLoaded', async function () {
           });
       });
     }
-  });
+  }
 
   // ═══════════════════════════════════════
   // CONTACT SETTINGS
@@ -1028,7 +1032,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       });
   }
 
-  document.addEventListener('DOMContentLoaded', function () {
+  function bindContactForm() {
     var form = document.getElementById('contactForm');
     if (form) {
       form.addEventListener('submit', function (e) {
@@ -1048,7 +1052,7 @@ document.addEventListener('DOMContentLoaded', async function () {
           .then(function (res) { if (res.success) toast('Contact settings saved'); else toast(res.message, 'error'); });
       });
     }
-  });
+  }
 
   // ═══════════════════════════════════════
   // ABOUT CONTENT
@@ -1070,7 +1074,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       });
   }
 
-  document.addEventListener('DOMContentLoaded', function () {
+  function bindAboutForm() {
     var form = document.getElementById('aboutForm');
     if (form) {
       form.addEventListener('submit', function (e) {
@@ -1089,7 +1093,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         Promise.all(saveAll).then(function () { toast('About content saved'); });
       });
     }
-  });
+  }
 
   // ═══════════════════════════════════════
   // BLOG
@@ -1137,7 +1141,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       .then(function (d) { if (d.success) { toast(d.message); loadBlogPosts(); } else toast(d.message, 'error'); });
   };
 
-  document.addEventListener('DOMContentLoaded', function () {
+  function bindAddBlog() {
     var addBtn = document.getElementById('addBlogBtn');
     if (addBtn) {
       addBtn.addEventListener('click', function () {
@@ -1156,5 +1160,5 @@ document.addEventListener('DOMContentLoaded', async function () {
           });
       });
     }
-  });
+  }
 });

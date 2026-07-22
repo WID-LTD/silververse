@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /dashboard.html
+Disallow: /ticket.html
+Disallow: /receipt.html
+Disallow: /verify.html
+
+Sitemap: https://silververse.ng/sitemap.xml

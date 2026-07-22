@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getSQL, isDBEnabled, getMemContactSettings, getMemAboutContent, getMemRoadmapMilestones } = require('../db');
+const { requireAuth } = require('../middleware/auth');
 
 // GET /contact — Public contact settings
 router.get('/contact', async (req, res) => {
@@ -125,6 +126,71 @@ router.get('/blog/:slug', async (req, res) => {
     }
   } catch (err) {
     console.error('Blog post error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /blog/:id/like — Toggle like (frontend sends post ID)
+router.post('/blog/:id/like', requireAuth, async (req, res) => {
+  try {
+    const postId = parseInt(req.params.id);
+    const userId = req.userId || req.user?.id;
+    if (isDBEnabled()) {
+      const sql = getSQL();
+      const post = await sql`SELECT id FROM blog_posts WHERE id = ${postId} AND published = true LIMIT 1`;
+      if (post.length === 0) return res.status(404).json({ success: false, message: 'Post not found' });
+      const existing = await sql`SELECT id FROM blog_likes WHERE post_id = ${postId} AND user_id = ${userId}`;
+      if (existing.length > 0) {
+        await sql`DELETE FROM blog_likes WHERE id = ${existing[0].id}`;
+        const cnt = await sql`SELECT COUNT(*)::int as count FROM blog_likes WHERE post_id = ${postId}`;
+        return res.json({ success: true, liked: false, likeCount: cnt[0].count });
+      }
+      await sql`INSERT INTO blog_likes (post_id, user_id) VALUES (${postId}, ${userId})`;
+      const cnt = await sql`SELECT COUNT(*)::int as count FROM blog_likes WHERE post_id = ${postId}`;
+      res.json({ success: true, liked: true, likeCount: cnt[0].count });
+    } else {
+      res.json({ success: true, liked: true, likeCount: 1 });
+    }
+  } catch (err) {
+    console.error('Blog like error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /blog/:id/comment — Add comment (frontend sends post ID)
+router.post('/blog/:id/comment', requireAuth, async (req, res) => {
+  try {
+    const postId = parseInt(req.params.id);
+    const { content } = req.body;
+    if (!content || !content.trim()) return res.status(400).json({ success: false, message: 'Comment content is required' });
+    const userId = req.userId || req.user?.id;
+    if (isDBEnabled()) {
+      const sql = getSQL();
+      const post = await sql`SELECT id FROM blog_posts WHERE id = ${postId} AND published = true LIMIT 1`;
+      if (post.length === 0) return res.status(404).json({ success: false, message: 'Post not found' });
+      await sql`INSERT INTO blog_comments (post_id, user_id, content) VALUES (${postId}, ${userId}, ${content.trim()})`;
+      res.json({ success: true, message: 'Comment added' });
+    } else {
+      res.json({ success: true, message: 'Comment added (memory mode)' });
+    }
+  } catch (err) {
+    console.error('Blog comment error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /contact/submit — Contact form submission
+router.post('/contact/submit', async (req, res) => {
+  try {
+    const { name, email, message } = req.body;
+    if (!name || !email || !message) return res.status(400).json({ success: false, message: 'All fields are required' });
+    if (isDBEnabled()) {
+      const sql = getSQL();
+      await sql`INSERT INTO contact_submissions (name, email, message) VALUES (${name}, ${email}, ${message})`;
+    }
+    res.json({ success: true, message: 'Thank you for your message. We will get back to you soon.' });
+  } catch (err) {
+    console.error('Contact submit error:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
