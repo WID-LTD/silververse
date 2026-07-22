@@ -102,7 +102,11 @@ document.addEventListener('DOMContentLoaded', async function () {
       users: 'Users',
       events: 'Events',
       checkin: 'Check-in',
-      videos: 'Videos'
+      videos: 'Videos',
+      roadmap: 'Roadmap',
+      contact: 'Contact Settings',
+      about: 'About Page',
+      blog: 'Blog Posts'
     };
     document.getElementById('pageTitle').textContent = titles[section] || 'Dashboard';
 
@@ -112,6 +116,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     else if (section === 'events') loadEvents();
     else if (section === 'checkin') loadCheckin();
     else if (section === 'videos') loadVideos();
+    else if (section === 'roadmap') loadRoadmap();
+    else if (section === 'contact') loadContactSettings();
+    else if (section === 'about') loadAboutContent();
+    else if (section === 'blog') loadBlogPosts();
   }
 
   function setupLogout() {
@@ -925,4 +933,228 @@ document.addEventListener('DOMContentLoaded', async function () {
       return dateStr;
     }
   }
+
+  // ═══════════════════════════════════════
+  // ROADMAP
+  // ═══════════════════════════════════════
+  var roadmapEventId = 1;
+
+  function loadRoadmap() {
+    fetch('/api/admin/events', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.success && d.data.length > 0) {
+          roadmapEventId = d.data[0].id;
+          fetchRoadmap();
+        }
+      });
+  }
+
+  function fetchRoadmap() {
+    fetch('/api/admin/roadmap/' + roadmapEventId, { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var tbody = document.getElementById('roadmapTableBody');
+        if (!tbody) return;
+        if (!d.success || !d.data) { tbody.innerHTML = '<tr><td colspan="5">Failed to load</td></tr>'; return; }
+        tbody.innerHTML = d.data.map(function (m) {
+          return '<tr><td>' + escapeHtml(m.title) + '</td><td>' + escapeHtml(m.milestoneDate || '') + '</td><td><span class="status-badge status-' + m.status + '">' + escapeHtml(m.status) + '</span></td><td>' + (m.sortOrder || 0) + '</td><td class="action-cell"><button class="btn btn-sm btn-outline" onclick="editRoadmap(' + m.id + ')">Edit</button> <button class="btn btn-sm btn-danger" onclick="deleteRoadmap(' + m.id + ')">Delete</button></td></tr>';
+        }).join('');
+      });
+  }
+
+  window.editRoadmap = function (id) {
+    fetch('/api/admin/roadmap/' + roadmapEventId, { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.success || !d.data) return;
+        var m = d.data.find(function (x) { return x.id === id; });
+        if (!m) return;
+        showModal('Edit Milestone',
+          '<div class="form-group"><label>Title</label><input type="text" id="rmTitle" class="form-input" value="' + escapeAttr(m.title) + '"></div>' +
+          '<div class="form-group"><label>Date</label><input type="text" id="rmDate" class="form-input" value="' + escapeAttr(m.milestoneDate || '') + '"></div>' +
+          '<div class="form-group"><label>Status</label><select id="rmStatus" class="form-input"><option value="completed"' + (m.status === 'completed' ? ' selected' : '') + '>Completed</option><option value="live"' + (m.status === 'live' ? ' selected' : '') + '>Live</option><option value="upcoming"' + (m.status === 'upcoming' ? ' selected' : '') + '>Upcoming</option></select></div>' +
+          '<div class="form-group"><label>Order</label><input type="number" id="rmOrder" class="form-input" value="' + (m.sortOrder || 0) + '"></div>',
+          'Save', function () {
+            var data = { title: document.getElementById('rmTitle').value, milestoneDate: document.getElementById('rmDate').value, status: document.getElementById('rmStatus').value, sortOrder: parseInt(document.getElementById('rmOrder').value) || 0 };
+            fetch('/api/admin/roadmap/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(data) })
+              .then(function (r) { return r.json(); })
+              .then(function (res) { if (res.success) { toast('Milestone updated'); closeModal(); fetchRoadmap(); } else toast(res.message, 'error'); });
+          });
+      });
+  };
+
+  window.deleteRoadmap = function (id) {
+    if (!confirm('Delete this milestone?')) return;
+    fetch('/api/admin/roadmap/' + id, { method: 'DELETE', credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (d.success) { toast(d.message); fetchRoadmap(); } else toast(d.message, 'error'); });
+  };
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var addBtn = document.getElementById('addRoadmapBtn');
+    if (addBtn) {
+      addBtn.addEventListener('click', function () {
+        showModal('Add Milestone',
+          '<div class="form-group"><label>Title</label><input type="text" id="rmTitle" class="form-input" placeholder="Milestone title"></div>' +
+          '<div class="form-group"><label>Date</label><input type="text" id="rmDate" class="form-input" placeholder="e.g. August 2026"></div>' +
+          '<div class="form-group"><label>Status</label><select id="rmStatus" class="form-input"><option value="upcoming">Upcoming</option><option value="live">Live</option><option value="completed">Completed</option></select></div>' +
+          '<div class="form-group"><label>Order</label><input type="number" id="rmOrder" class="form-input" value="0"></div>',
+          'Create', function () {
+            var data = { eventId: roadmapEventId, title: document.getElementById('rmTitle').value, milestoneDate: document.getElementById('rmDate').value, status: document.getElementById('rmStatus').value, sortOrder: parseInt(document.getElementById('rmOrder').value) || 0 };
+            if (!data.title) { toast('Title required', 'error'); return; }
+            fetch('/api/admin/roadmap', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(data) })
+              .then(function (r) { return r.json(); })
+              .then(function (res) { if (res.success) { toast('Milestone created'); closeModal(); fetchRoadmap(); } else toast(res.message, 'error'); });
+          });
+      });
+    }
+  });
+
+  // ═══════════════════════════════════════
+  // CONTACT SETTINGS
+  // ═══════════════════════════════════════
+  function loadContactSettings() {
+    fetch('/api/admin/contact-settings', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.success || !d.data) return;
+        var map = d.data;
+        var fields = ['Email', 'Phone1', 'Phone2', 'Whatsapp', 'Address', 'Instagram', 'Twitter', 'Facebook'];
+        fields.forEach(function (f) {
+          var el = document.getElementById('contact' + f);
+          if (el && map[f.toLowerCase()]) el.value = map[f.toLowerCase()];
+        });
+      });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var form = document.getElementById('contactForm');
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var data = {
+          email: document.getElementById('contactEmail').value,
+          phone1: document.getElementById('contactPhone1').value,
+          phone2: document.getElementById('contactPhone2').value,
+          whatsapp: document.getElementById('contactWhatsapp').value,
+          address: document.getElementById('contactAddress').value,
+          social_instagram: document.getElementById('contactInstagram').value,
+          social_twitter: document.getElementById('contactTwitter').value,
+          social_facebook: document.getElementById('contactFacebook').value,
+        };
+        fetch('/api/admin/contact-settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(data) })
+          .then(function (r) { return r.json(); })
+          .then(function (res) { if (res.success) toast('Contact settings saved'); else toast(res.message, 'error'); });
+      });
+    }
+  });
+
+  // ═══════════════════════════════════════
+  // ABOUT CONTENT
+  // ═══════════════════════════════════════
+  function loadAboutContent() {
+    fetch('/api/admin/about', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var container = document.getElementById('aboutFields');
+        if (!container) return;
+        if (!d.success || !d.data) { container.innerHTML = '<p>No about content loaded</p>'; return; }
+        container.innerHTML = d.data.map(function (s) {
+          return '<div class="form-group" style="border:1px solid var(--gray-200);padding:16px;border-radius:var(--radius);margin-bottom:16px;"><label><strong>' + escapeHtml(s.section_key || s.sectionKey) + '</strong></label>' +
+            '<input type="hidden" class="about-key" value="' + escapeAttr(s.section_key || s.sectionKey) + '">' +
+            '<div class="form-group" style="margin-top:8px;"><label>Title</label><input type="text" class="about-title form-input" value="' + escapeAttr(s.title || '') + '"></div>' +
+            '<div class="form-group"><label>Content</label><textarea class="about-content form-input" rows="4">' + escapeHtml(s.content || '') + '</textarea></div>' +
+            '<div class="form-group"><label>Image URL</label><input type="text" class="about-image form-input" value="' + escapeAttr(s.image_url || s.imageUrl || '') + '"></div></div>';
+        }).join('');
+      });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var form = document.getElementById('aboutForm');
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var fields = document.querySelectorAll('.about-key');
+        var saveAll = [];
+        fields.forEach(function (hidden) {
+          var container = hidden.closest('.form-group');
+          if (!container) return;
+          var sectionKey = hidden.value;
+          var title = container.querySelector('.about-title') ? container.querySelector('.about-title').value : '';
+          var content = container.querySelector('.about-content') ? container.querySelector('.about-content').value : '';
+          var imageUrl = container.querySelector('.about-image') ? container.querySelector('.about-image').value : '';
+          saveAll.push(fetch('/api/admin/about', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ sectionKey: sectionKey, title: title, content: content, imageUrl: imageUrl }) }));
+        });
+        Promise.all(saveAll).then(function () { toast('About content saved'); });
+      });
+    }
+  });
+
+  // ═══════════════════════════════════════
+  // BLOG
+  // ═══════════════════════════════════════
+  function loadBlogPosts() {
+    fetch('/api/admin/blog', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var tbody = document.getElementById('blogTableBody');
+        if (!tbody) return;
+        if (!d.success || !d.data) { tbody.innerHTML = '<tr><td colspan="5">No posts yet</td></tr>'; return; }
+        tbody.innerHTML = d.data.map(function (p) {
+          return '<tr><td>' + escapeHtml(p.title) + '</td><td>' + escapeHtml(p.author_name || '—') + '</td><td><span class="status-badge status-' + (p.published ? 'live' : 'upcoming') + '">' + (p.published ? 'Published' : 'Draft') + '</span></td><td>' + formatDate(p.published_at || p.created_at) + '</td><td class="action-cell"><button class="btn btn-sm btn-outline" onclick="editBlogPost(' + p.id + ')">Edit</button> <button class="btn btn-sm btn-danger" onclick="deleteBlogPost(' + p.id + ')">Delete</button></td></tr>';
+        }).join('');
+      });
+  }
+
+  window.editBlogPost = function (id) {
+    fetch('/api/admin/blog', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.success || !d.data) return;
+        var p = d.data.find(function (x) { return x.id === id; });
+        if (!p) return;
+        showModal('Edit Post',
+          '<div class="form-group"><label>Title</label><input type="text" id="bpTitle" class="form-input" value="' + escapeAttr(p.title) + '"></div>' +
+          '<div class="form-group"><label>Excerpt</label><input type="text" id="bpExcerpt" class="form-input" value="' + escapeAttr(p.excerpt || '') + '"></div>' +
+          '<div class="form-group"><label>Content (HTML)</label><textarea id="bpContent" class="form-input" rows="8">' + escapeHtml(p.content || '') + '</textarea></div>' +
+          '<div class="form-group"><label>Featured Image URL</label><input type="text" id="bpImage" class="form-input" value="' + escapeAttr(p.featured_image || '') + '"></div>' +
+          '<div class="form-group"><label class="checkbox-wrap" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="bpPublished" ' + (p.published ? 'checked' : '') + '> <span>Published</span></label></div>',
+          'Save', function () {
+            var data = { title: document.getElementById('bpTitle').value, excerpt: document.getElementById('bpExcerpt').value, content: document.getElementById('bpContent').value, featuredImage: document.getElementById('bpImage').value, published: document.getElementById('bpPublished').checked };
+            if (!data.title) { toast('Title required', 'error'); return; }
+            fetch('/api/admin/blog/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(data) })
+              .then(function (r) { return r.json(); })
+              .then(function (res) { if (res.success) { toast('Post updated'); closeModal(); loadBlogPosts(); } else toast(res.message, 'error'); });
+          });
+      });
+  };
+
+  window.deleteBlogPost = function (id) {
+    if (!confirm('Delete this post?')) return;
+    fetch('/api/admin/blog/' + id, { method: 'DELETE', credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (d.success) { toast(d.message); loadBlogPosts(); } else toast(d.message, 'error'); });
+  };
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var addBtn = document.getElementById('addBlogBtn');
+    if (addBtn) {
+      addBtn.addEventListener('click', function () {
+        showModal('New Post',
+          '<div class="form-group"><label>Title</label><input type="text" id="bpTitle" class="form-input" placeholder="Post title"></div>' +
+          '<div class="form-group"><label>Excerpt</label><input type="text" id="bpExcerpt" class="form-input" placeholder="Short summary"></div>' +
+          '<div class="form-group"><label>Content (HTML)</label><textarea id="bpContent" class="form-input" rows="8" placeholder="Write your post content here..."></textarea></div>' +
+          '<div class="form-group"><label>Featured Image URL</label><input type="text" id="bpImage" class="form-input" placeholder="https://..."></div>' +
+          '<div class="form-group"><label class="checkbox-wrap" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="bpPublished"> <span>Publish immediately</span></label></div>',
+          'Create', function () {
+            var data = { title: document.getElementById('bpTitle').value, excerpt: document.getElementById('bpExcerpt').value, content: document.getElementById('bpContent').value, featuredImage: document.getElementById('bpImage').value, published: document.getElementById('bpPublished').checked };
+            if (!data.title) { toast('Title required', 'error'); return; }
+            fetch('/api/admin/blog', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(data) })
+              .then(function (r) { return r.json(); })
+              .then(function (res) { if (res.success) { toast('Post created'); closeModal(); loadBlogPosts(); } else toast(res.message, 'error'); });
+          });
+      });
+    }
+  });
 });

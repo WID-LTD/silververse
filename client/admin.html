@@ -62,6 +62,25 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             Videos
           </a>
+          <a href="#roadmap" class="sidebar-nav-item" data-section="roadmap">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Roadmap
+          </a>
+        </div>
+        <div class="sidebar-nav-group">
+          <div class="sidebar-nav-group-title">Content</div>
+          <a href="#contact" class="sidebar-nav-item" data-section="contact">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Contact
+          </a>
+          <a href="#about" class="sidebar-nav-item" data-section="about">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            About Page
+          </a>
+          <a href="#blog" class="sidebar-nav-item" data-section="blog">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+            Blog
+          </a>
         </div>
       </nav>
 
@@ -267,6 +286,75 @@
                   </tr>
                 </thead>
                 <tbody id="videoTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Roadmap -->
+        <section id="section-roadmap" class="admin-section" style="display:none;">
+          <div class="admin-table-card">
+            <div class="admin-table-header">
+              <h3>Roadmap Milestones</h3>
+              <div class="table-actions">
+                <button class="btn btn-primary btn-sm" id="addRoadmapBtn">+ Add Milestone</button>
+              </div>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="admin-table">
+                <thead>
+                  <tr><th>Title</th><th>Date</th><th>Status</th><th>Order</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="roadmapTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Contact Settings -->
+        <section id="section-contact" class="admin-section" style="display:none;">
+          <div class="admin-table-card" style="padding:24px;max-width:600px;">
+            <h3 style="margin-bottom:20px;">Contact Settings</h3>
+            <form id="contactForm">
+              <div class="form-group"><label>Email</label><input type="email" id="contactEmail" class="form-input"></div>
+              <div class="form-group"><label>Phone 1</label><input type="text" id="contactPhone1" class="form-input"></div>
+              <div class="form-group"><label>Phone 2</label><input type="text" id="contactPhone2" class="form-input"></div>
+              <div class="form-group"><label>WhatsApp</label><input type="text" id="contactWhatsapp" class="form-input"></div>
+              <div class="form-group"><label>Address</label><input type="text" id="contactAddress" class="form-input"></div>
+              <div class="form-group"><label>Instagram</label><input type="text" id="contactInstagram" class="form-input"></div>
+              <div class="form-group"><label>Twitter</label><input type="text" id="contactTwitter" class="form-input"></div>
+              <div class="form-group"><label>Facebook</label><input type="text" id="contactFacebook" class="form-input"></div>
+              <button type="submit" class="btn btn-primary">Save Contact Settings</button>
+            </form>
+          </div>
+        </section>
+
+        <!-- About Page -->
+        <section id="section-about" class="admin-section" style="display:none;">
+          <div class="admin-table-card" style="padding:24px;max-width:700px;">
+            <h3 style="margin-bottom:20px;">About Page Sections</h3>
+            <form id="aboutForm">
+              <div id="aboutFields"></div>
+              <button type="submit" class="btn btn-primary">Save About Content</button>
+            </form>
+          </div>
+        </section>
+
+        <!-- Blog -->
+        <section id="section-blog" class="admin-section" style="display:none;">
+          <div class="admin-table-card">
+            <div class="admin-table-header">
+              <h3>Blog Posts</h3>
+              <div class="table-actions">
+                <button class="btn btn-primary btn-sm" id="addBlogBtn">+ New Post</button>
+              </div>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="admin-table">
+                <thead>
+                  <tr><th>Title</th><th>Author</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="blogTableBody"></tbody>
               </table>
             </div>
           </div>
