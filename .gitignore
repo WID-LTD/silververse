@@ -5,3 +5,7 @@ client/.env
 server/.env
 *.log
 .DS_Store
+
+# Keep .env.example templates tracked
+!server/.env.example
+!client/.env.example

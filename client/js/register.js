@@ -496,20 +496,33 @@ document.addEventListener('DOMContentLoaded', function () {
     if (summaryAmount) summaryAmount.textContent = '\u20A6' + prices[type].toLocaleString();
   }
 
-  window._initPayment = function () {
+  var flwPublicKey = '';
+
+  async function fetchPaymentConfig() {
+    try {
+      var res = await fetch('/api/payment/config', { credentials: 'same-origin' });
+      var data = await res.json();
+      if (data.success && data.enabled && data.publicKey) {
+        flwPublicKey = data.publicKey;
+      }
+    } catch (_e) {}
+  }
+
+  fetchPaymentConfig();
+
+  window._initPayment = async function () {
     var prices = { Regular: 3000, VIP: 5000, VVIP: 10000 };
     var amount = prices[registrationData.ticketType] || 3000;
     var payBtn = document.getElementById('payBtn');
 
-    // If Flutterwave is available, launch real checkout
-    if (typeof Flutterwave !== 'undefined') {
+    if (flwPublicKey && typeof FlutterwaveCheckout !== 'undefined') {
       if (payBtn) {
         payBtn.disabled = true;
         payBtn.textContent = 'Launching payment...';
       }
       try {
         FlutterwaveCheckout({
-          public_key: '',
+          public_key: flwPublicKey,
           tx_ref: 'SVV26-' + Date.now(),
           amount: amount,
           currency: 'NGN',
@@ -534,25 +547,24 @@ document.addEventListener('DOMContentLoaded', function () {
               payBtn.disabled = false;
               payBtn.innerHTML = 'Pay &#8358;' + amount.toLocaleString() + ' &rarr;';
             }
-            showToast('Payment cancelled. You can still proceed.', 'warning');
+            showToast('Payment cancelled. You can still proceed to create your account.', 'warning');
           }
         });
       } catch (_e) {
-        showToast('Payment processing... (Demo mode)', 'info');
+        showToast('Payment error. Proceeding to account setup...', 'warning');
         if (payBtn) {
           payBtn.disabled = false;
           payBtn.innerHTML = 'Pay &#8358;' + amount.toLocaleString() + ' &rarr;';
         }
-        setTimeout(function () { window._goToStep(4); }, 1500);
+        window._goToStep(4);
       }
     } else {
-      // Demo / fallback mode
-      showToast('Payment processing... (Demo mode: proceeding to account setup)', 'info');
+      showToast('Payment will be handled after account creation. Proceeding...', 'info');
       if (payBtn) {
         payBtn.disabled = true;
         payBtn.textContent = 'Processing...';
       }
-      setTimeout(function () { window._goToStep(4); }, 1500);
+      setTimeout(function () { window._goToStep(4); }, 1200);
     }
   };
 

@@ -3,37 +3,43 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   var loadingEl = document.getElementById('loadingState');
   var contentEl = document.getElementById('dashContent');
+  var userInfo = null;
+
   if (loadingEl) loadingEl.style.display = 'block';
 
   try {
     var res = await fetch('/api/auth/me', { credentials: 'same-origin' });
     var data = await res.json();
-
     if (!data.success && !data.user) {
       window.location.href = 'login.html';
       return;
     }
+    userInfo = data.user || data;
 
-    var user = data.user || data;
+    document.getElementById('dashWelcome').textContent = 'Welcome back, ' + (userInfo.displayName || userInfo.username || 'User') + '!';
+    document.getElementById('dashEmail').textContent = userInfo.email || '';
 
-    document.getElementById('dashWelcome').textContent = 'Welcome back, ' + (user.displayName || user.username || 'User') + '!';
-    document.getElementById('dashEmail').textContent = user.email || '';
-
-    var initials = (user.displayName || user.username || '?').charAt(0).toUpperCase();
+    var initials = (userInfo.displayName || userInfo.username || '?').charAt(0).toUpperCase();
     document.getElementById('dashAvatar').textContent = initials;
 
-    if (user.role) {
-      document.getElementById('settingsRole').textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+    if (userInfo.profileImage) {
+      var avatarEl = document.getElementById('dashAvatar');
+      avatarEl.innerHTML = '<img src="' + escapeAttr(userInfo.profileImage) + '" alt="Profile" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" loading="lazy">';
     }
 
-    document.getElementById('settingsName').value = user.displayName || '';
-    document.getElementById('settingsEmail').textContent = user.email || '';
+    if (userInfo.role) {
+      document.getElementById('settingsRole').textContent = userInfo.role.charAt(0).toUpperCase() + userInfo.role.slice(1);
+    }
+
+    document.getElementById('settingsName').value = userInfo.displayName || '';
+    document.getElementById('settingsEmail').textContent = userInfo.email || '';
 
     if (loadingEl) loadingEl.style.display = 'none';
     if (contentEl) contentEl.style.display = 'block';
 
     fetchAndRenderTickets();
-
+    setupProfileUpload();
+    setupSettings();
   } catch (err) {
     window.location.href = 'login.html';
   }
@@ -73,12 +79,23 @@ document.addEventListener('DOMContentLoaded', async function () {
       var statusCls = statusActive ? 'status-active' : 'status-pending';
       var statusLabel = statusActive ? 'Verified' : 'Pending';
 
+      var eventName = t.eventName || 'Voices & Visions Festival 2026';
+      var eventDate = t.eventDate ? formatDate(t.eventDate) : '15 August 2026';
+      var eventVenue = t.eventVenue || 'Rochas Foundation, Ideato, Orlu, Imo State';
+
+      var profileImgHtml = '';
+      if (t.profileImage) {
+        profileImgHtml = '<div class="card-profile-img"><img src="' + escapeAttr(t.profileImage) + '" alt="Profile" width="40" height="40" loading="lazy"></div>';
+      }
+
       var detailsHtml = '';
       var fields = [
         { label: 'Registration', value: t.regId },
         { label: 'Category', value: t.category },
         { label: 'Ticket Type', value: (t.ticketType || 'Regular') + ' Ticket' },
-        { label: 'Date', value: '15 August 2026' }
+        { label: 'Event', value: eventName },
+        { label: 'Date', value: eventDate },
+        { label: 'Venue', value: eventVenue }
       ];
       fields.forEach(function (f) {
         detailsHtml += '<div class="card-detail"><span class="detail-label">' + f.label + '</span><span class="detail-value">' + escapeHtml(f.value) + '</span></div>';
@@ -86,9 +103,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 
       return '<div class="ticket-card-item">' +
         '<div class="ticket-card-header">' +
-          '<span class="card-cat-badge ' + catClass + '">' + escapeHtml(t.category || 'Spectator') + '</span>' +
+          '<div class="card-header-top">' +
+            '<span class="card-cat-badge ' + catClass + '">' + escapeHtml(t.category || 'Spectator') + '</span>' +
+            profileImgHtml +
+          '</div>' +
           '<h3>' + escapeHtml(t.firstName + ' ' + t.lastName) + '</h3>' +
-          '<span class="card-event-name">Voices &amp; Visions Festival 2026</span>' +
+          '<span class="card-event-name">' + escapeHtml(eventName) + '</span>' +
         '</div>' +
         '<div class="ticket-card-body"><div class="card-details">' + detailsHtml + '</div></div>' +
         '<div class="ticket-card-footer">' +
@@ -102,41 +122,99 @@ document.addEventListener('DOMContentLoaded', async function () {
     }).join('');
   }
 
-  var saveBtn = document.getElementById('saveSettings');
-  if (saveBtn) {
-    saveBtn.addEventListener('click', async function () {
-      var name = document.getElementById('settingsName').value.trim();
-      var password = document.getElementById('settingsPassword').value;
+  function setupProfileUpload() {
+    var uploadBtn = document.getElementById('uploadProfileBtn');
+    var fileInput = document.getElementById('profileFileInput');
+    if (!uploadBtn || !fileInput) return;
 
-      if (!name && !password) {
-        showToast('Nothing to update.', 'warning');
+    uploadBtn.addEventListener('click', function () { fileInput.click(); });
+
+    fileInput.addEventListener('change', async function () {
+      var file = this.files[0];
+      if (!file) return;
+
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('Image must be under 5MB.', 'error');
         return;
       }
 
-      try {
-        var body = {};
-        if (name) body.displayName = name;
-        if (password && password.length >= 6) body.password = password;
+      var formData = new FormData();
+      formData.append('image', file);
 
-        var res = await fetch('/api/auth/update', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+      try {
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = 'Uploading...';
+
+        var res = await fetch('/api/upload/profile', {
+          method: 'POST',
           credentials: 'same-origin',
-          body: JSON.stringify(body)
+          body: formData
         });
         var result = await res.json();
 
-        if (result.success) {
-          showToast('Settings saved successfully!');
-          if (password) document.getElementById('settingsPassword').value = '';
+        if (result.success && result.url) {
+          var avatarEl = document.getElementById('dashAvatar');
+          avatarEl.innerHTML = '<img src="' + escapeAttr(result.url) + '" alt="Profile" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" loading="lazy">';
+          showToast('Profile image updated!');
         } else {
-          showToast(result.message || 'Failed to save settings.', 'error');
+          showToast(result.message || 'Upload failed.', 'error');
         }
       } catch (_e) {
-        showToast('Settings saved!', 'success');
-        if (password) document.getElementById('settingsPassword').value = '';
+        showToast('Upload failed. Please try again.', 'error');
+      } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = 'Change Photo';
+        fileInput.value = '';
       }
     });
+  }
+
+  function setupSettings() {
+    var saveBtn = document.getElementById('saveSettings');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', async function () {
+        var name = document.getElementById('settingsName').value.trim();
+        var password = document.getElementById('settingsPassword').value;
+
+        if (!name && !password) {
+          showToast('Nothing to update.', 'warning');
+          return;
+        }
+
+        try {
+          var body = {};
+          if (name) body.displayName = name;
+          if (password && password.length >= 6) body.password = password;
+
+          var res = await fetch('/api/auth/update', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(body)
+          });
+          var result = await res.json();
+
+          if (result.success) {
+            showToast('Settings saved successfully!');
+            if (password) document.getElementById('settingsPassword').value = '';
+          } else {
+            showToast(result.message || 'Failed to save settings.', 'error');
+          }
+        } catch (_e) {
+          showToast('Settings saved!', 'success');
+          if (password) document.getElementById('settingsPassword').value = '';
+        }
+      });
+    }
+  }
+
+  function formatDate(dateStr) {
+    try {
+      var d = new Date(dateStr);
+      return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    } catch (_e) {
+      return dateStr;
+    }
   }
 
   function showToast(msg, type) {
@@ -153,5 +231,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     var div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  function escapeAttr(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 });

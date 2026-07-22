@@ -93,12 +93,17 @@ app.post('/api/upload/profile', requireAuth, upload.single('image'), async (req,
     const key = `profiles/${req.session.userId}.${ext}`;
 
     if (R2_ENABLED) {
-      await r2Client.send(new PutObjectCommand({
-        Bucket: R2_BUCKET,
-        Key: key,
-        Body: req.file.buffer,
-        ContentType: req.file.mimetype,
-      }));
+      try {
+        await r2Client.send(new PutObjectCommand({
+          Bucket: R2_BUCKET,
+          Key: key,
+          Body: req.file.buffer,
+          ContentType: req.file.mimetype,
+        }));
+      } catch (r2Err) {
+        console.error('R2 upload failed:', r2Err.message);
+        return res.status(502).json({ success: false, message: 'Cloud storage upload failed. Image saved locally.' });
+      }
     }
 
     const url = R2_PUBLIC_URL ? `${R2_PUBLIC_URL}/${key}` : key;
@@ -115,6 +120,27 @@ app.post('/api/upload/profile', requireAuth, upload.single('image'), async (req,
     res.json({ success: true, url });
   } catch (err) {
     console.error('Profile upload error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── GET profile image URL (for tickets, receipts, etc.) ──
+app.get('/api/upload/profile-url/:userId', requireAuth, async (req, res) => {
+  try {
+    const targetId = parseInt(req.params.userId) || req.session.userId;
+
+    if (isDBEnabled()) {
+      const sqlFn = getSQL();
+      const result = await sqlFn`SELECT profile_image FROM users WHERE id = ${targetId}`;
+      if (result.length === 0) return res.status(404).json({ success: false, message: 'User not found' });
+      res.json({ success: true, url: result[0].profile_image || '' });
+    } else {
+      const { getMemUsers } = require('./db');
+      const user = getMemUsers().find(u => u.id === targetId);
+      res.json({ success: true, url: user ? (user.profile_image || '') : '' });
+    }
+  } catch (err) {
+    console.error('Profile URL error:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 });

@@ -35,7 +35,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     setupModal();
     navigateTo(getHash() || 'dashboard');
     loadDashboard();
-
   } catch (err) {
     window.location.href = 'login.html';
   }
@@ -124,34 +123,23 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   /* ═══ DASHBOARD ═══ */
   async function loadDashboard() {
-    var stats = { total: 0, checkedIn: 0, pending: 0, contestants: 0 };
-
     try {
       var res = await fetch('/api/admin/stats', { credentials: 'same-origin' });
       var data = await res.json();
-      if (data.success && data.stats) {
-        stats = data.stats;
+      if (data.success && data.data) {
+        var s = data.data;
+        document.getElementById('statTotal').textContent = s.totalRegistrations || 0;
+        document.getElementById('statCheckedIn').textContent = s.checkedIn || 0;
+        document.getElementById('statPending').textContent = s.pending || 0;
+        document.getElementById('statContestants').textContent = s.totalContestants || 0;
+        var regCountEl = document.getElementById('regCount');
+        if (regCountEl) regCountEl.textContent = s.totalRegistrations || 0;
+        var pendingBadgeEl = document.getElementById('pendingBadge');
+        if (pendingBadgeEl) pendingBadgeEl.textContent = s.pending || 0;
+        var revenueEl = document.getElementById('statRevenue');
+        if (revenueEl) revenueEl.textContent = '\u20A6' + Number(s.totalRevenue || 0).toLocaleString();
       }
-    } catch (_e) {
-      try {
-        var regRes = await fetch('/api/registrations/all', { credentials: 'same-origin' });
-        var regData = await regRes.json();
-        if (regData.success && Array.isArray(regData.data)) {
-          allRegistrations = regData.data;
-          stats.total = allRegistrations.length;
-          stats.checkedIn = allRegistrations.filter(function (r) { return r.checkedIn; }).length;
-          stats.pending = stats.total - stats.checkedIn;
-          stats.contestants = allRegistrations.filter(function (r) { return r.category === 'Contestant'; }).length;
-        }
-      } catch (_e2) {}
-    }
-
-    document.getElementById('statTotal').textContent = stats.total;
-    document.getElementById('statCheckedIn').textContent = stats.checkedIn;
-    document.getElementById('statPending').textContent = stats.pending;
-    document.getElementById('statContestants').textContent = stats.contestants;
-    document.getElementById('regCount').textContent = stats.total;
-    document.getElementById('pendingBadge').textContent = stats.pending;
+    } catch (_e) {}
   }
 
   /* ═══ REGISTRATIONS ═══ */
@@ -183,26 +171,41 @@ document.addEventListener('DOMContentLoaded', async function () {
       var checkinBadge = r.checkedIn
         ? '<span class="badge badge-green">Checked In</span>'
         : '<span class="badge badge-yellow">Not Checked</span>';
+      var amount = r.amountPaid ? '\u20A6' + Number(r.amountPaid).toLocaleString() : '\u20A60';
 
       return '<tr>' +
         '<td><strong>' + escapeHtml(r.regId || '') + '</strong></td>' +
         '<td>' + escapeHtml((r.firstName || '') + ' ' + (r.lastName || '')) + '</td>' +
         '<td>' + escapeHtml(r.email || '') + '</td>' +
         '<td><span class="badge badge-blue">' + escapeHtml(r.category || 'Spectator') + '</span></td>' +
-        '<td>' + statusBadge + '</td>' +
-        '<td>' + checkinBadge + '</td>' +
+        '<td>' + amount + '</td>' +
+        '<td>' + statusBadge + ' / ' + checkinBadge + '</td>' +
         '<td>' +
           '<div class="cell-actions">' +
-            '<button class="action-btn" title="Toggle check-in" onclick="adminApp.toggleCheckin(\'' + escapeAttr(r.regId) + '\')">' +
+            '<button class="action-btn" title="Toggle check-in" data-action="checkin" data-regid="' + escapeAttr(r.regId) + '">' +
               '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>' +
             '</button>' +
-            '<button class="action-btn" title="Verify payment" onclick="adminApp.verifyPayment(\'' + escapeAttr(r.regId) + '\')">' +
+            '<button class="action-btn" title="Verify payment" data-action="verify" data-regid="' + escapeAttr(r.regId) + '">' +
               '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
+            '</button>' +
+            '<button class="action-btn action-danger" title="Delete registration" data-action="delete-reg" data-id="' + r.id + '" data-regid="' + escapeAttr(r.regId) + '">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
             '</button>' +
           '</div>' +
         '</td>' +
       '</tr>';
     }).join('');
+
+    tbody.querySelectorAll('[data-action]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var action = this.getAttribute('data-action');
+        var regId = this.getAttribute('data-regid');
+        var id = this.getAttribute('data-id');
+        if (action === 'checkin') apiToggleCheckin(regId);
+        else if (action === 'verify') apiVerifyPayment(regId);
+        else if (action === 'delete-reg') apiDeleteRegistration(id, regId);
+      });
+    });
   }
 
   var regSearch = document.getElementById('regSearch');
@@ -242,16 +245,16 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     tbody.innerHTML = users.map(function (u) {
-      var initials = (u.displayName || u.username || u.email || '?').charAt(0).toUpperCase();
+      var userInitials = (u.displayName || u.username || u.email || '?').charAt(0).toUpperCase();
       var roleBadge = u.role === 'admin'
         ? '<span class="badge badge-gold">Admin</span>'
-        : '<span class="badge badge-blue">User</span>';
-      var joined = u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+        : '<span class="badge badge-blue">' + escapeHtml(u.role || 'User') + '</span>';
+      var joined = u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '\u2014';
 
       return '<tr>' +
         '<td>' +
           '<div class="cell-user">' +
-            '<div class="user-thumb">' + escapeHtml(initials) + '</div>' +
+            '<div class="user-thumb">' + escapeHtml(userInitials) + '</div>' +
             '<div><div class="user-name">' + escapeHtml(u.displayName || u.username || 'User') + '</div></div>' +
           '</div>' +
         '</td>' +
@@ -260,13 +263,27 @@ document.addEventListener('DOMContentLoaded', async function () {
         '<td>' + joined + '</td>' +
         '<td>' +
           '<div class="cell-actions">' +
-            '<button class="action-btn" title="Toggle admin role" onclick="adminApp.toggleRole(\'' + escapeAttr(u._id || u.id || '') + '\', \'' + escapeAttr(u.role || 'user') + '\')">' +
+            '<button class="action-btn" title="Toggle role" data-action="toggle-role" data-userid="' + u.id + '" data-role="' + escapeAttr(u.role || 'user') + '">' +
               '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' +
+            '</button>' +
+            '<button class="action-btn action-danger" title="Delete user" data-action="delete-user" data-userid="' + u.id + '" data-username="' + escapeAttr(u.username) + '">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
             '</button>' +
           '</div>' +
         '</td>' +
       '</tr>';
     }).join('');
+
+    tbody.querySelectorAll('[data-action]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var action = this.getAttribute('data-action');
+        var userId = this.getAttribute('data-userid');
+        var role = this.getAttribute('data-role');
+        var username = this.getAttribute('data-username');
+        if (action === 'toggle-role') apiToggleRole(userId, role);
+        else if (action === 'delete-user') apiDeleteUser(userId, username);
+      });
+    });
   }
 
   var userSearch = document.getElementById('userSearch');
@@ -292,12 +309,6 @@ document.addEventListener('DOMContentLoaded', async function () {
       }
     } catch (_e) {}
 
-    if (allEvents.length === 0) {
-      allEvents = [
-        { name: 'Voices & Visions Festival 2026', date: '2026-08-15', location: 'Rochas Foundation, Ideato, Orlu, Imo State', status: 'upcoming' }
-      ];
-    }
-
     renderEvents(allEvents);
   }
 
@@ -316,25 +327,34 @@ document.addEventListener('DOMContentLoaded', async function () {
         : ev.status === 'active'
           ? '<span class="badge badge-green">Active</span>'
           : '<span class="badge badge-yellow">Past</span>';
-      var dateStr = ev.date ? new Date(ev.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+      var dateStr = ev.eventDate ? formatDate(ev.eventDate) : '\u2014';
 
       return '<tr>' +
         '<td><strong>' + escapeHtml(ev.name || '') + '</strong></td>' +
         '<td>' + dateStr + '</td>' +
-        '<td>' + escapeHtml(ev.location || '') + '</td>' +
+        '<td>' + escapeHtml(ev.venue || '') + '</td>' +
         '<td>' + statusBadge + '</td>' +
         '<td>' +
           '<div class="cell-actions">' +
-            '<button class="action-btn" title="Edit event" onclick="adminApp.editEvent(\'' + escapeAttr(ev._id || ev.id || '') + '\')">' +
+            '<button class="action-btn" title="Edit event" data-action="edit-event" data-eventid="' + ev.id + '">' +
               '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>' +
             '</button>' +
-            '<button class="action-btn action-danger" title="Delete event" onclick="adminApp.deleteEvent(\'' + escapeAttr(ev._id || ev.id || '') + '\')">' +
+            '<button class="action-btn action-danger" title="Delete event" data-action="delete-event" data-eventid="' + ev.id + '">' +
               '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
             '</button>' +
           '</div>' +
         '</td>' +
       '</tr>';
     }).join('');
+
+    tbody.querySelectorAll('[data-action]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var action = this.getAttribute('data-action');
+        var eventId = this.getAttribute('data-eventid');
+        if (action === 'edit-event') editEvent(eventId);
+        else if (action === 'delete-event') apiDeleteEvent(eventId);
+      });
+    });
   }
 
   var addEventBtn = document.getElementById('addEventBtn');
@@ -344,28 +364,86 @@ document.addEventListener('DOMContentLoaded', async function () {
         '<div class="form-group"><label for="eventName">Event Name</label><input type="text" id="eventName" placeholder="Event name"></div>' +
         '<div class="form-row">' +
           '<div class="form-group"><label for="eventDate">Date</label><input type="date" id="eventDate"></div>' +
-          '<div class="form-group"><label for="eventLocation">Location</label><input type="text" id="eventLocation" placeholder="Venue"></div>' +
+          '<div class="form-group"><label for="eventVenue">Venue</label><input type="text" id="eventVenue" placeholder="Venue"></div>' +
         '</div>',
         '<button class="btn btn-outline btn-sm" id="modalCancelBtn">Cancel</button>' +
         '<button class="btn btn-primary btn-sm" id="modalSaveBtn">Save Event</button>'
       );
 
       document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
-      document.getElementById('modalSaveBtn').addEventListener('click', function () {
+      document.getElementById('modalSaveBtn').addEventListener('click', async function () {
         var name = document.getElementById('eventName').value.trim();
         var date = document.getElementById('eventDate').value;
-        var location = document.getElementById('eventLocation').value.trim();
+        var venue = document.getElementById('eventVenue').value.trim();
 
         if (!name) {
           showToast('Event name is required.', 'error');
           return;
         }
 
-        allEvents.push({ name: name, date: date, location: location, status: 'upcoming' });
-        renderEvents(allEvents);
-        closeModal();
-        showToast('Event added successfully!');
+        try {
+          var res = await fetch('/api/admin/events', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ name, event_date: date, venue })
+          });
+          var result = await res.json();
+          if (result.success) {
+            allEvents.push(result.data);
+            renderEvents(allEvents);
+            closeModal();
+            showToast('Event added successfully!');
+          } else {
+            showToast(result.message || 'Failed to add event.', 'error');
+          }
+        } catch (_e) {
+          showToast('Failed to add event.', 'error');
+        }
       });
+    });
+  }
+
+  function editEvent(eventId) {
+    var ev = allEvents.find(function (e) { return String(e.id) === String(eventId); });
+    if (!ev) return;
+
+    openModal('Edit Event',
+      '<div class="form-group"><label for="editEventName">Event Name</label><input type="text" id="editEventName" value="' + escapeAttr(ev.name || '') + '"></div>' +
+      '<div class="form-row">' +
+        '<div class="form-group"><label for="editEventDate">Date</label><input type="date" id="editEventDate" value="' + escapeAttr(ev.eventDate || '') + '"></div>' +
+        '<div class="form-group"><label for="editEventVenue">Venue</label><input type="text" id="editEventVenue" value="' + escapeAttr(ev.venue || '') + '"></div>' +
+      '</div>',
+      '<button class="btn btn-outline btn-sm" id="modalCancelBtn">Cancel</button>' +
+      '<button class="btn btn-primary btn-sm" id="modalSaveBtn">Save Changes</button>'
+    );
+
+    document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
+    document.getElementById('modalSaveBtn').addEventListener('click', async function () {
+      var name = document.getElementById('editEventName').value.trim();
+      var date = document.getElementById('editEventDate').value;
+      var venue = document.getElementById('editEventVenue').value.trim();
+
+      try {
+        var res = await fetch('/api/admin/events/' + eventId, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ name, event_date: date, venue })
+        });
+        var result = await res.json();
+        if (result.success) {
+          var idx = allEvents.findIndex(function (e) { return String(e.id) === String(eventId); });
+          if (idx !== -1) allEvents[idx] = result.data;
+          renderEvents(allEvents);
+          closeModal();
+          showToast('Event updated!');
+        } else {
+          showToast(result.message || 'Failed to update.', 'error');
+        }
+      } catch (_e) {
+        showToast('Failed to update event.', 'error');
+      }
     });
   }
 
@@ -405,9 +483,15 @@ document.addEventListener('DOMContentLoaded', async function () {
         '<td>' + escapeHtml((r.firstName || '') + ' ' + (r.lastName || '')) + '</td>' +
         '<td><span class="badge badge-blue">' + escapeHtml(r.category || 'Spectator') + '</span></td>' +
         '<td>' + checkinBadge + '</td>' +
-        '<td><button class="' + btnClass + '" onclick="adminApp.toggleCheckin(\'' + escapeAttr(r.regId) + '\')">' + btnLabel + '</button></td>' +
+        '<td><button class="' + btnClass + '" data-action="checkin" data-regid="' + escapeAttr(r.regId) + '">' + btnLabel + '</button></td>' +
       '</tr>';
     }).join('');
+
+    tbody.querySelectorAll('[data-action="checkin"]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        apiToggleCheckin(this.getAttribute('data-regid'));
+      });
+    });
   }
 
   var checkinSearch = document.getElementById('checkinSearch');
@@ -424,7 +508,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   var manualCheckinBtn = document.getElementById('manualCheckinBtn');
   if (manualCheckinBtn) {
-    manualCheckinBtn.addEventListener('click', function () {
+    manualCheckinBtn.addEventListener('click', async function () {
       var input = document.getElementById('manualRegId');
       var id = (input.value || '').trim().toUpperCase();
       var resultEl = document.getElementById('checkinResult');
@@ -435,27 +519,172 @@ document.addEventListener('DOMContentLoaded', async function () {
         return;
       }
 
-      var reg = allRegistrations.find(function (r) { return r.regId === id; });
-      if (!reg) {
-        resultEl.style.display = 'block';
-        resultEl.innerHTML = '<div class="badge badge-red" style="padding:8px 12px;">Registration not found: ' + escapeHtml(id) + '</div>';
-        return;
-      }
+      try {
+        var res = await fetch('/api/registrations/' + encodeURIComponent(id) + '/checkin', {
+          method: 'PUT',
+          credentials: 'same-origin'
+        });
+        var data = await res.json();
+        if (data.success && data.data) {
+          resultEl.style.display = 'block';
+          resultEl.innerHTML = '<div class="badge badge-green" style="padding:8px 12px;">' + escapeHtml(data.data.firstName + ' ' + data.data.lastName) + ' \u2014 ' + (data.data.checkedIn ? 'checked in' : 'check-in removed') + '!</div>';
 
-      if (!reg.checkedIn) {
-        reg.checkedIn = true;
-        reg.checkedInTime = new Date().toISOString();
+          var idx = allRegistrations.findIndex(function (r) { return r.regId === id; });
+          if (idx !== -1) allRegistrations[idx] = data.data;
+          renderCheckinTable(allRegistrations);
+          loadDashboard();
+        } else {
+          resultEl.style.display = 'block';
+          resultEl.innerHTML = '<div class="badge badge-red" style="padding:8px 12px;">' + escapeHtml(data.message || 'Registration not found') + '</div>';
+        }
+      } catch (_e) {
         resultEl.style.display = 'block';
-        resultEl.innerHTML = '<div class="badge badge-green" style="padding:8px 12px;">' + escapeHtml(reg.firstName + ' ' + reg.lastName) + ' checked in successfully!</div>';
-      } else {
-        resultEl.style.display = 'block';
-        resultEl.innerHTML = '<div class="badge badge-yellow" style="padding:8px 12px;">' + escapeHtml(reg.firstName + ' ' + reg.lastName) + ' is already checked in.</div>';
+        resultEl.innerHTML = '<div class="badge badge-red" style="padding:8px 12px;">Error checking in. Try again.</div>';
       }
 
       input.value = '';
-      renderCheckinTable(allRegistrations);
-      loadDashboard();
     });
+  }
+
+  /* ═══ EXPORT CSV ═══ */
+  var exportBtn = document.getElementById('exportCsvBtn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', function () {
+      window.open('/api/admin/export/registrations', '_blank');
+    });
+  }
+
+  /* ═══ API MUTATIONS ═══ */
+  async function apiToggleCheckin(regId) {
+    try {
+      var res = await fetch('/api/registrations/' + encodeURIComponent(regId) + '/checkin', {
+        method: 'PUT',
+        credentials: 'same-origin'
+      });
+      var data = await res.json();
+      if (data.success && data.data) {
+        var label = data.data.checkedIn ? 'checked in' : 'check-in removed';
+        showToast(data.data.firstName + ' ' + data.data.lastName + ' ' + label);
+
+        var idx = allRegistrations.findIndex(function (r) { return r.regId === regId; });
+        if (idx !== -1) allRegistrations[idx] = data.data;
+
+        renderRegistrations(allRegistrations);
+        renderCheckinTable(allRegistrations);
+        loadDashboard();
+      } else {
+        showToast(data.message || 'Failed.', 'error');
+      }
+    } catch (_e) {
+      showToast('Failed to toggle check-in.', 'error');
+    }
+  }
+
+  async function apiVerifyPayment(regId) {
+    try {
+      var res = await fetch('/api/registrations/' + encodeURIComponent(regId) + '/verify', {
+        method: 'PUT',
+        credentials: 'same-origin'
+      });
+      var data = await res.json();
+      if (data.success && data.data) {
+        showToast(data.data.firstName + ' ' + data.data.lastName + ' payment verified!');
+
+        var idx = allRegistrations.findIndex(function (r) { return r.regId === regId; });
+        if (idx !== -1) allRegistrations[idx] = data.data;
+
+        renderRegistrations(allRegistrations);
+        loadDashboard();
+      } else {
+        showToast(data.message || 'Failed.', 'error');
+      }
+    } catch (_e) {
+      showToast('Failed to verify payment.', 'error');
+    }
+  }
+
+  async function apiToggleRole(userId, currentRole) {
+    var newRole = currentRole === 'admin' ? 'user' : 'admin';
+    try {
+      var res = await fetch('/api/admin/users/' + userId + '/role', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ role: newRole })
+      });
+      var data = await res.json();
+      if (data.success) {
+        showToast('Role changed to ' + newRole);
+        var idx = allUsers.findIndex(function (u) { return String(u.id) === String(userId); });
+        if (idx !== -1) allUsers[idx].role = newRole;
+        renderUsers(allUsers);
+      } else {
+        showToast(data.message || 'Failed.', 'error');
+      }
+    } catch (_e) {
+      showToast('Failed to update role.', 'error');
+    }
+  }
+
+  async function apiDeleteUser(userId, username) {
+    if (!confirm('Delete user "' + username + '"? This cannot be undone.')) return;
+    try {
+      var res = await fetch('/api/admin/users/' + userId, {
+        method: 'DELETE',
+        credentials: 'same-origin'
+      });
+      var data = await res.json();
+      if (data.success) {
+        showToast(data.message || 'User deleted.');
+        allUsers = allUsers.filter(function (u) { return String(u.id) !== String(userId); });
+        renderUsers(allUsers);
+      } else {
+        showToast(data.message || 'Failed.', 'error');
+      }
+    } catch (_e) {
+      showToast('Failed to delete user.', 'error');
+    }
+  }
+
+  async function apiDeleteEvent(eventId) {
+    if (!confirm('Delete this event? This cannot be undone.')) return;
+    try {
+      var res = await fetch('/api/admin/events/' + eventId, {
+        method: 'DELETE',
+        credentials: 'same-origin'
+      });
+      var data = await res.json();
+      if (data.success) {
+        showToast(data.message || 'Event deleted.');
+        allEvents = allEvents.filter(function (e) { return String(e.id) !== String(eventId); });
+        renderEvents(allEvents);
+      } else {
+        showToast(data.message || 'Failed.', 'error');
+      }
+    } catch (_e) {
+      showToast('Failed to delete event.', 'error');
+    }
+  }
+
+  async function apiDeleteRegistration(id, regId) {
+    if (!confirm('Delete registration "' + regId + '"? This cannot be undone.')) return;
+    try {
+      var res = await fetch('/api/admin/registrations/' + id, {
+        method: 'DELETE',
+        credentials: 'same-origin'
+      });
+      var data = await res.json();
+      if (data.success) {
+        showToast(data.message || 'Registration deleted.');
+        allRegistrations = allRegistrations.filter(function (r) { return String(r.id) !== String(id); });
+        renderRegistrations(allRegistrations);
+        loadDashboard();
+      } else {
+        showToast(data.message || 'Failed.', 'error');
+      }
+    } catch (_e) {
+      showToast('Failed to delete registration.', 'error');
+    }
   }
 
   /* ═══ MODAL ═══ */
@@ -486,75 +715,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     document.getElementById('modalOverlay').classList.remove('active');
   }
 
-  /* ═══ PUBLIC API ═══ */
-  window.adminApp = {
-    toggleCheckin: function (regId) {
-      var reg = allRegistrations.find(function (r) { return r.regId === regId; });
-      if (!reg) return;
-
-      reg.checkedIn = !reg.checkedIn;
-      reg.checkedInTime = reg.checkedIn ? new Date().toISOString() : null;
-
-      var label = reg.checkedIn ? 'checked in' : 'check-in removed';
-      showToast(reg.firstName + ' ' + reg.lastName + ' ' + label);
-
-      renderRegistrations(allRegistrations);
-      renderCheckinTable(allRegistrations);
-      loadDashboard();
-    },
-
-    verifyPayment: function (regId) {
-      var reg = allRegistrations.find(function (r) { return r.regId === regId; });
-      if (!reg) return;
-
-      reg.paymentStatus = 'verified';
-      showToast(reg.firstName + ' ' + reg.lastName + ' payment verified!');
-      renderRegistrations(allRegistrations);
-    },
-
-    toggleRole: function (userId, currentRole) {
-      var newRole = currentRole === 'admin' ? 'user' : 'admin';
-      var user = allUsers.find(function (u) { return (u._id || u.id) === userId; });
-      if (user) {
-        user.role = newRole;
-        showToast('Role changed to ' + newRole);
-        renderUsers(allUsers);
-      }
-    },
-
-    editEvent: function (eventId) {
-      var ev = allEvents.find(function (e) { return (e._id || e.id) === eventId; });
-      if (!ev) return;
-
-      openModal('Edit Event',
-        '<div class="form-group"><label for="editEventName">Event Name</label><input type="text" id="editEventName" value="' + escapeAttr(ev.name || '') + '"></div>' +
-        '<div class="form-row">' +
-          '<div class="form-group"><label for="editEventDate">Date</label><input type="date" id="editEventDate" value="' + escapeAttr(ev.date || '') + '"></div>' +
-          '<div class="form-group"><label for="editEventLocation">Location</label><input type="text" id="editEventLocation" value="' + escapeAttr(ev.location || '') + '"></div>' +
-        '</div>',
-        '<button class="btn btn-outline btn-sm" id="modalCancelBtn">Cancel</button>' +
-        '<button class="btn btn-primary btn-sm" id="modalSaveBtn">Save Changes</button>'
-      );
-
-      document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
-      document.getElementById('modalSaveBtn').addEventListener('click', function () {
-        ev.name = document.getElementById('editEventName').value.trim();
-        ev.date = document.getElementById('editEventDate').value;
-        ev.location = document.getElementById('editEventLocation').value.trim();
-        renderEvents(allEvents);
-        closeModal();
-        showToast('Event updated!');
-      });
-    },
-
-    deleteEvent: function (eventId) {
-      if (!confirm('Are you sure you want to delete this event?')) return;
-      allEvents = allEvents.filter(function (e) { return (e._id || e.id) !== eventId; });
-      renderEvents(allEvents);
-      showToast('Event deleted.');
-    }
-  };
-
   /* ═══ UTILITIES ═══ */
   function showToast(msg, type) {
     type = type || 'success';
@@ -575,5 +735,13 @@ document.addEventListener('DOMContentLoaded', async function () {
   function escapeAttr(str) {
     if (!str) return '';
     return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function formatDate(dateStr) {
+    try {
+      return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    } catch (_e) {
+      return dateStr;
+    }
   }
 });

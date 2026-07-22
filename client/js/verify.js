@@ -41,20 +41,8 @@ document.addEventListener('DOMContentLoaded', function () {
       var data = await res.json();
       if (data.success && data.data) {
         ticket = data.data;
-      } else if (data.regId) {
-        ticket = data;
       }
     } catch (_e) {}
-
-    if (!ticket) {
-      try {
-        var localData = localStorage.getItem('silververse_registrations');
-        if (localData) {
-          var all = JSON.parse(localData);
-          ticket = all.find(function (r) { return r.regId === regId; });
-        }
-      } catch (_e2) {}
-    }
 
     if (!ticket) {
       renderInvalid(regId);
@@ -72,10 +60,13 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function renderValid(ticket, isCheckedIn) {
-    var checkinText = isCheckedIn ? 'Already checked in' : 'Not yet checked in';
     var checkinBadge = isCheckedIn
       ? '<span class="badge badge-green">Checked In</span>'
       : '<span class="badge badge-yellow">Awaiting Check-in</span>';
+
+    var eventName = ticket.eventName || 'Voices & Visions Festival 2026';
+    var eventDate = ticket.eventDate ? formatDate(ticket.eventDate) : '15 August 2026';
+    var eventVenue = ticket.eventVenue || 'Rochas Foundation, Ideato, Orlu, Imo State';
 
     contentEl.innerHTML =
       '<div class="verify-card">' +
@@ -91,9 +82,9 @@ document.addEventListener('DOMContentLoaded', function () {
           renderDetailRow('Ticket Type', (ticket.ticketType || 'Regular') + ' Ticket') +
           renderDetailRow('Payment Status', '<span class="badge badge-green">Verified</span>') +
           renderDetailRow('Check-in Status', checkinBadge) +
-          renderDetailRow('Event', 'Voices & Visions Festival 2026') +
-          renderDetailRow('Date', '15 August 2026') +
-          renderDetailRow('Venue', 'Rochas Foundation, Ideato, Orlu, Imo State') +
+          renderDetailRow('Event', eventName) +
+          renderDetailRow('Date', eventDate) +
+          renderDetailRow('Venue', eventVenue) +
         '</div>' +
         '<div class="verify-actions">' +
           '<a href="ticket.html?id=' + encodeURIComponent(ticket.regId) + '" class="btn btn-primary btn-sm">View Ticket</a>' +
@@ -105,6 +96,8 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function renderPending(ticket) {
+    var eventName = ticket.eventName || 'Voices & Visions Festival 2026';
+
     contentEl.innerHTML =
       '<div class="verify-card">' +
         '<div class="verify-card-header warning">' +
@@ -117,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function () {
           renderDetailRow('Name', (ticket.firstName || '') + ' ' + (ticket.lastName || '')) +
           renderDetailRow('Category', ticket.category || 'Spectator') +
           renderDetailRow('Payment Status', '<span class="badge badge-yellow">Pending</span>') +
-          renderDetailRow('Event', 'Voices & Visions Festival 2026') +
+          renderDetailRow('Event', eventName) +
         '</div>' +
         '<div class="verify-actions">' +
           '<a href="ticket.html?id=' + encodeURIComponent(ticket.regId) + '" class="btn btn-outline btn-sm">View Ticket</a>' +
@@ -162,6 +155,14 @@ document.addEventListener('DOMContentLoaded', function () {
       '<span class="detail-label">' + label + '</span>' +
       '<span class="detail-value">' + value + '</span>' +
     '</div>';
+  }
+
+  function formatDate(dateStr) {
+    try {
+      return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    } catch (_e) {
+      return dateStr;
+    }
   }
 
   function escapeHtml(str) {

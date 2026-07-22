@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="View your official payment receipt for Voices & Visions Festival 2026.">
   <title>Official Receipt | Voices & Visions Festival 2026</title>
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/base.css">
@@ -19,9 +20,24 @@
     <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
   </svg>
 
-  <div id="nav-root"></div>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <nav class="navbar no-print" aria-label="Primary navigation">
+    <div class="container">
+      <a href="index.html" class="navbar-brand">
+        <img src="public/silververse.png" alt="SilverVerse" width="40" height="40" style="border-radius:8px;">
+        SilverVerse
+      </a>
+      <ul class="navbar-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+        <li id="navAuth"><a href="login.html">Login</a></li>
+      </ul>
+      <button class="mobile-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="navLinks">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </nav>
 
-  <div class="ticket-page">
+  <main class="ticket-page" id="main-content">
     <div class="ticket-actions no-print" id="receiptActions" style="display:none;">
       <button onclick="window.print()" class="btn btn-primary">
         <svg style="width:16px;height:16px;"><use href="#icon-printer"/></svg> Print Receipt
@@ -37,12 +53,16 @@
     <div class="receipt" id="receipt">
       <div class="receipt-header">
         <div class="logo">SILVERVERSE</div>
-        <div class="event-name">Voices & Visions Festival 2026</div>
+        <div class="event-name" id="r-event-name">Voices & Visions Festival 2026</div>
         <div class="theme">Discovering Talent &middot; Inspiring Purpose &middot; Building the Future</div>
       </div>
 
       <div class="receipt-body">
         <div class="receipt-title">Official Payment Confirmation Receipt</div>
+
+        <div class="receipt-profile-img" id="r-profile-wrap" style="display:none;">
+          <img id="r-profileImg" src="" alt="Profile photo" loading="lazy">
+        </div>
 
         <div class="receipt-details">
           <div class="receipt-row">
@@ -77,6 +97,10 @@
           <div class="receipt-row">
             <span class="label">Payment Date</span>
             <span class="value" id="r-payDate">&mdash;</span>
+          </div>
+          <div class="receipt-row">
+            <span class="label">Event</span>
+            <span class="value" id="r-eventTitle">Voices & Visions Festival 2026</span>
           </div>
           <div class="receipt-row">
             <span class="label">Venue</span>
@@ -114,13 +138,13 @@
 
     <div class="receipt-empty" id="receiptEmpty" style="display:none;">
       <div class="empty-icon">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       </div>
       <h2>No Registration Found</h2>
       <p id="emptyMsg">No registration data found. Please register first.</p>
       <a href="register.html" class="btn btn-primary">Register Now</a>
     </div>
-  </div>
+  </main>
 
   <footer class="footer no-print">
     <div class="container">
@@ -132,10 +156,6 @@
 
   <script src="js/nav.js"></script>
   <script>
-    const API_BASE = window.location.hostname === 'localhost'
-      ? 'http://localhost:10000/api'
-      : 'https://silververse-b1hq.onrender.com/api';
-
     const PRICES = { Regular: 3000, VIP: 5000, VVIP: 10000 };
 
     function formatAmount(ticketType) {
@@ -143,7 +163,16 @@
       return '\u20A6' + price.toLocaleString();
     }
 
-    function loadReceipt() {
+    function formatDate(dateStr) {
+      if (!dateStr) return '15 August 2026';
+      try {
+        return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+      } catch (_e) {
+        return dateStr;
+      }
+    }
+
+    async function loadReceipt() {
       const params = new URLSearchParams(window.location.search);
       const regId = params.get('id') || params.get('reg_id');
 
@@ -152,34 +181,49 @@
         return;
       }
 
-      fetch(`${API_BASE}/tickets/${encodeURIComponent(regId)}`, {
-        credentials: 'include'
-      })
-        .then(r => {
-          if (!r.ok) throw new Error('Not found');
-          return r.json();
-        })
-        .then(d => {
-          if (!d.success || !d.data) {
-            showEmpty('Registration not found. Please register first.');
-            return;
-          }
-          const data = d.data;
-          document.getElementById('r-regId').textContent = data.regId || regId;
-          document.getElementById('r-name').textContent = [data.firstName, data.lastName].filter(Boolean).join(' ');
-          document.getElementById('r-category').textContent = data.category || '\u2014';
-          document.getElementById('r-ticketType').textContent = data.ticketType || 'Regular';
-          document.getElementById('r-amount').textContent = formatAmount(data.ticketType);
+      try {
+        const res = await fetch('/api/ticket/' + encodeURIComponent(regId), { credentials: 'same-origin' });
+        const d = await res.json();
+        if (!d.success || !d.data) {
+          showEmpty('Registration not found. Please register first.');
+          return;
+        }
+        const data = d.data;
 
-          const statusText = data.paymentStatus === 'verified' ? 'VERIFIED' : data.paymentStatus === 'paid' ? 'PAID' : 'PENDING';
-          document.getElementById('r-paymentStatusText').textContent = statusText;
+        document.getElementById('r-regId').textContent = data.regId || regId;
+        document.getElementById('r-name').textContent = [data.firstName, data.lastName].filter(Boolean).join(' ');
+        document.getElementById('r-category').textContent = data.category || '\u2014';
+        document.getElementById('r-ticketType').textContent = (data.ticketType || 'Regular') + ' Ticket';
+        document.getElementById('r-amount').textContent = data.amountPaid ? '\u20A6' + Number(data.amountPaid).toLocaleString() : formatAmount(data.ticketType);
 
-          document.getElementById('receipt').style.display = '';
-          document.getElementById('receiptActions').style.display = '';
-        })
-        .catch(() => {
-          showEmpty('Could not load registration data. Please try again or register first.');
-        });
+        const statusText = data.paymentStatus === 'verified' || data.paymentStatus === 'approved' ? 'VERIFIED' : 'PENDING';
+        document.getElementById('r-paymentStatusText').textContent = statusText;
+
+        if (data.createdAt) {
+          document.getElementById('r-payDate').textContent = formatDate(data.createdAt);
+        }
+
+        if (data.eventName) {
+          document.getElementById('r-event-name').textContent = data.eventName;
+          document.getElementById('r-eventTitle').textContent = data.eventName;
+        }
+        if (data.eventDate) {
+          document.getElementById('r-eventDate').textContent = formatDate(data.eventDate);
+        }
+        if (data.eventVenue) {
+          document.getElementById('r-venue').textContent = data.eventVenue;
+        }
+
+        if (data.profileImage) {
+          document.getElementById('r-profileImg').src = data.profileImage;
+          document.getElementById('r-profile-wrap').style.display = 'flex';
+        }
+
+        document.getElementById('receipt').style.display = '';
+        document.getElementById('receiptActions').style.display = '';
+      } catch (_e) {
+        showEmpty('Could not load registration data. Please try again or register first.');
+      }
     }
 
     function showEmpty(msg) {
@@ -197,8 +241,8 @@
           title: 'SilverVerse Payment Receipt',
           text: 'My official payment receipt for Voices & Visions Festival 2026',
           url: window.location.href
-        });
-      } else {
+        }).catch(function() {});
+      } else if (navigator.clipboard) {
         navigator.clipboard.writeText(window.location.href).then(() => {
           alert('Link copied to clipboard!');
         });
