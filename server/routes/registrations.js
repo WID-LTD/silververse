@@ -46,7 +46,8 @@ router.post('/', requireAuth, async (req, res) => {
   try {
     const {
       firstName, lastName, email, phone, category, subCategory,
-      ticketType, talent, talentDescription, perfTime, eventId
+      ticketType, talent, talentDescription, perfTime, eventId, amount,
+      paymentTxRef, paymentStatus
     } = req.body;
 
     if (!firstName || !lastName || !email || !phone || !category) {
@@ -66,9 +67,10 @@ router.post('/', requireAuth, async (req, res) => {
         if (evts.length > 0) resolvedEventId = evts[0].id;
       }
 
+      const payStatus = paymentTxRef && paymentStatus ? paymentStatus : 'pending';
       await sql`
-        INSERT INTO registrations (user_id, reg_id, event_id, first_name, last_name, email, phone, category, sub_category, ticket_type, talent, talent_description, perf_time)
-        VALUES (${userId}, ${regId}, ${resolvedEventId}, ${firstName}, ${lastName}, ${email.toLowerCase()}, ${phone}, ${category}, ${subCategory || ''}, ${ticketType || 'Regular'}, ${talent || ''}, ${talentDescription || ''}, ${perfTime || ''})
+        INSERT INTO registrations (user_id, reg_id, event_id, first_name, last_name, email, phone, category, sub_category, ticket_type, talent, talent_description, perf_time, amount_paid, payment_status, payment_tx_ref)
+        VALUES (${userId}, ${regId}, ${resolvedEventId}, ${firstName}, ${lastName}, ${email.toLowerCase()}, ${phone}, ${category}, ${subCategory || ''}, ${ticketType || 'Regular'}, ${talent || ''}, ${talentDescription || ''}, ${perfTime || ''}, ${amount || 0}, ${payStatus}, ${paymentTxRef || ''})
       `;
       res.json({ success: true, regId, message: `Registration successful! Your ID: ${regId}` });
     } else {
@@ -82,7 +84,8 @@ router.post('/', requireAuth, async (req, res) => {
         category, sub_category: subCategory || '', ticket_type: ticketType || 'Regular',
         talent: talent || '', talent_description: talentDescription || '',
         perf_time: perfTime || '', profile_image: '', qr_code: '',
-        payment_status: 'pending', payment_tx_ref: '', amount_paid: 0,
+        payment_status: (paymentTxRef && paymentStatus) ? paymentStatus : 'pending',
+        payment_tx_ref: paymentTxRef || '', amount_paid: amount || 0,
         checked_in: false, checked_in_time: null,
         created_at: new Date().toISOString()
       });

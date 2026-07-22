@@ -281,6 +281,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             '<button class="action-btn" title="Toggle role" data-action="toggle-role" data-userid="' + u.id + '" data-role="' + escapeAttr(u.role || 'user') + '">' +
               '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' +
             '</button>' +
+            '<button class="action-btn" title="Reset password" data-action="reset-password" data-userid="' + u.id + '" data-username="' + escapeAttr(u.displayName || u.username || 'User') + '">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' +
+            '</button>' +
             '<button class="action-btn action-danger" title="Delete user" data-action="delete-user" data-userid="' + u.id + '" data-username="' + escapeAttr(u.username) + '">' +
               '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
             '</button>' +
@@ -296,6 +299,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         var role = this.getAttribute('data-role');
         var username = this.getAttribute('data-username');
         if (action === 'toggle-role') apiToggleRole(userId, role);
+        else if (action === 'reset-password') apiResetPassword(userId, username);
         else if (action === 'delete-user') apiDeleteUser(userId, username);
       });
     });
@@ -641,6 +645,39 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
   }
 
+  async function apiResetPassword(userId, username) {
+    openModal('Reset Password: ' + escapeHtml(username),
+      '<div class="form-group"><label for="resetPassInput">New Password</label><input type="password" id="resetPassInput" class="form-input" placeholder="Minimum 6 characters" minlength="6"></div>',
+      '<button class="btn btn-outline btn-sm" id="resetPassCancel">Cancel</button>' +
+      '<button class="btn btn-primary btn-sm" id="resetPassSave">Update Password</button>'
+    );
+    document.getElementById('resetPassCancel').addEventListener('click', closeModal);
+    document.getElementById('resetPassSave').addEventListener('click', async function () {
+      var newPassword = document.getElementById('resetPassInput').value;
+      if (!newPassword || newPassword.length < 6) {
+        showToast('Password must be at least 6 characters.', 'error');
+        return;
+      }
+      try {
+        var res = await fetch('/api/admin/users/' + userId + '/password', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ newPassword: newPassword })
+        });
+        var data = await res.json();
+        if (data.success) {
+          showToast(data.message || 'Password updated!');
+          closeModal();
+        } else {
+          showToast(data.message || 'Failed to update password.', 'error');
+        }
+      } catch (_e) {
+        showToast('Failed to update password.', 'error');
+      }
+    });
+  }
+
   async function apiDeleteUser(userId, username) {
     if (!confirm('Delete user "' + username + '"? This cannot be undone.')) return;
     try {
@@ -983,7 +1020,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             var data = { title: document.getElementById('rmTitle').value, milestoneDate: document.getElementById('rmDate').value, status: document.getElementById('rmStatus').value, sortOrder: parseInt(document.getElementById('rmOrder').value) || 0 };
             fetch('/api/admin/roadmap/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(data) })
               .then(function (r) { return r.json(); })
-              .then(function (res) { if (res.success) { toast('Milestone updated'); closeModal(); fetchRoadmap(); } else toast(res.message, 'error'); });
+              .then(function (res) { if (res.success) { showToast('Milestone updated'); closeModal(); fetchRoadmap(); } else showToast(res.message, 'error'); });
           });
       });
   };
@@ -992,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     if (!confirm('Delete this milestone?')) return;
     fetch('/api/admin/roadmap/' + id, { method: 'DELETE', credentials: 'same-origin' })
       .then(function (r) { return r.json(); })
-      .then(function (d) { if (d.success) { toast(d.message); fetchRoadmap(); } else toast(d.message, 'error'); });
+      .then(function (d) { if (d.success) { showToast(d.message); fetchRoadmap(); } else showToast(d.message, 'error'); });
   };
 
   function bindAddRoadmap() {
@@ -1006,10 +1043,10 @@ document.addEventListener('DOMContentLoaded', async function () {
           '<div class="form-group"><label>Order</label><input type="number" id="rmOrder" class="form-input" value="0"></div>',
           'Create', function () {
             var data = { eventId: roadmapEventId, title: document.getElementById('rmTitle').value, milestoneDate: document.getElementById('rmDate').value, status: document.getElementById('rmStatus').value, sortOrder: parseInt(document.getElementById('rmOrder').value) || 0 };
-            if (!data.title) { toast('Title required', 'error'); return; }
+            if (!data.title) { showToast('Title required', 'error'); return; }
             fetch('/api/admin/roadmap', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(data) })
               .then(function (r) { return r.json(); })
-              .then(function (res) { if (res.success) { toast('Milestone created'); closeModal(); fetchRoadmap(); } else toast(res.message, 'error'); });
+              .then(function (res) { if (res.success) { showToast('Milestone created'); closeModal(); fetchRoadmap(); } else showToast(res.message, 'error'); });
           });
       });
     }
@@ -1049,7 +1086,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         };
         fetch('/api/admin/contact-settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(data) })
           .then(function (r) { return r.json(); })
-          .then(function (res) { if (res.success) toast('Contact settings saved'); else toast(res.message, 'error'); });
+          .then(function (res) { if (res.success) showToast('Contact settings saved'); else showToast(res.message, 'error'); });
       });
     }
   }
@@ -1090,7 +1127,7 @@ document.addEventListener('DOMContentLoaded', async function () {
           var imageUrl = container.querySelector('.about-image') ? container.querySelector('.about-image').value : '';
           saveAll.push(fetch('/api/admin/about', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ sectionKey: sectionKey, title: title, content: content, imageUrl: imageUrl }) }));
         });
-        Promise.all(saveAll).then(function () { toast('About content saved'); });
+        Promise.all(saveAll).then(function () { showToast('About content saved'); });
       });
     }
   }
@@ -1126,10 +1163,10 @@ document.addEventListener('DOMContentLoaded', async function () {
           '<div class="form-group"><label class="checkbox-wrap" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="bpPublished" ' + (p.published ? 'checked' : '') + '> <span>Published</span></label></div>',
           'Save', function () {
             var data = { title: document.getElementById('bpTitle').value, excerpt: document.getElementById('bpExcerpt').value, content: document.getElementById('bpContent').value, featuredImage: document.getElementById('bpImage').value, published: document.getElementById('bpPublished').checked };
-            if (!data.title) { toast('Title required', 'error'); return; }
+            if (!data.title) { showToast('Title required', 'error'); return; }
             fetch('/api/admin/blog/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(data) })
               .then(function (r) { return r.json(); })
-              .then(function (res) { if (res.success) { toast('Post updated'); closeModal(); loadBlogPosts(); } else toast(res.message, 'error'); });
+              .then(function (res) { if (res.success) { showToast('Post updated'); closeModal(); loadBlogPosts(); } else showToast(res.message, 'error'); });
           });
       });
   };
@@ -1138,14 +1175,14 @@ document.addEventListener('DOMContentLoaded', async function () {
     if (!confirm('Delete this post?')) return;
     fetch('/api/admin/blog/' + id, { method: 'DELETE', credentials: 'same-origin' })
       .then(function (r) { return r.json(); })
-      .then(function (d) { if (d.success) { toast(d.message); loadBlogPosts(); } else toast(d.message, 'error'); });
+      .then(function (d) { if (d.success) { showToast(d.message); loadBlogPosts(); } else showToast(d.message, 'error'); });
   };
 
   function bindAddBlog() {
     var addBtn = document.getElementById('addBlogBtn');
     if (addBtn) {
       addBtn.addEventListener('click', function () {
-        showModal('New Post',
+        openModal('New Post',
           '<div class="form-group"><label>Title</label><input type="text" id="bpTitle" class="form-input" placeholder="Post title"></div>' +
           '<div class="form-group"><label>Excerpt</label><input type="text" id="bpExcerpt" class="form-input" placeholder="Short summary"></div>' +
           '<div class="form-group"><label>Content (HTML)</label><textarea id="bpContent" class="form-input" rows="8" placeholder="Write your post content here..."></textarea></div>' +
@@ -1153,10 +1190,10 @@ document.addEventListener('DOMContentLoaded', async function () {
           '<div class="form-group"><label class="checkbox-wrap" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="bpPublished"> <span>Publish immediately</span></label></div>',
           'Create', function () {
             var data = { title: document.getElementById('bpTitle').value, excerpt: document.getElementById('bpExcerpt').value, content: document.getElementById('bpContent').value, featuredImage: document.getElementById('bpImage').value, published: document.getElementById('bpPublished').checked };
-            if (!data.title) { toast('Title required', 'error'); return; }
+            if (!data.title) { showToast('Title required', 'error'); return; }
             fetch('/api/admin/blog', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(data) })
               .then(function (r) { return r.json(); })
-              .then(function (res) { if (res.success) { toast('Post created'); closeModal(); loadBlogPosts(); } else toast(res.message, 'error'); });
+              .then(function (res) { if (res.success) { showToast('Post created'); closeModal(); loadBlogPosts(); } else showToast(res.message, 'error'); });
           });
       });
     }

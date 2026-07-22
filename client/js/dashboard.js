@@ -2,8 +2,15 @@ document.addEventListener('DOMContentLoaded', async function () {
   'use strict';
 
   var loadingEl = document.getElementById('loadingState');
-  var contentEl = document.getElementById('dashContent');
+  var contentEl = document.getElementById('dashContentWrapper');
   var userInfo = null;
+  var currentSection = 'tickets';
+
+  var sectionTitles = {
+    tickets: 'My Tickets',
+    actions: 'Quick Actions',
+    settings: 'Settings'
+  };
 
   if (loadingEl) loadingEl.style.display = 'block';
 
@@ -16,24 +23,30 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
     userInfo = data.user || data;
 
-    document.getElementById('dashWelcome').textContent = 'Welcome back, ' + (userInfo.displayName || userInfo.username || 'User') + '!';
-    document.getElementById('dashEmail').textContent = userInfo.email || '';
+    document.getElementById('dashSidebarName').textContent = userInfo.displayName || userInfo.username || 'User';
+    document.getElementById('dashSidebarEmail').textContent = userInfo.email || '';
 
-    var initialEl = document.querySelector('#dashAvatar .dash-avatar-initial');
+    var initialEl = document.querySelector('.dash-avatar-initial');
     var initials = (userInfo.displayName || userInfo.username || '?').charAt(0).toUpperCase();
     if (initialEl) initialEl.textContent = initials;
 
     if (userInfo.profileImage) {
       var avatarEl = document.getElementById('dashAvatar');
-      avatarEl.innerHTML = '<img src="' + escapeAttr(userInfo.profileImage) + '" alt="Profile" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" loading="lazy">';
+      avatarEl.innerHTML = '<img src="' + escapeAttr(userInfo.profileImage) + '" alt="Profile" loading="lazy">';
     }
 
     if (userInfo.role) {
-      document.getElementById('settingsRole').textContent = userInfo.role.charAt(0).toUpperCase() + userInfo.role.slice(1);
+      var roleEl = document.getElementById('settingsRole');
+      if (roleEl) roleEl.textContent = userInfo.role.charAt(0).toUpperCase() + userInfo.role.slice(1);
     }
 
-    document.getElementById('settingsName').value = userInfo.displayName || '';
-    document.getElementById('settingsEmail').textContent = userInfo.email || '';
+    var nameInput = document.getElementById('settingsName');
+    if (nameInput) nameInput.value = userInfo.displayName || '';
+    var emailEl = document.getElementById('settingsEmail');
+    if (emailEl) emailEl.textContent = userInfo.email || '';
+
+    setupSidebar();
+    setupLogout();
 
     if (loadingEl) loadingEl.style.display = 'none';
     if (contentEl) contentEl.style.display = 'block';
@@ -41,8 +54,80 @@ document.addEventListener('DOMContentLoaded', async function () {
     fetchAndRenderTickets();
     setupProfileUpload();
     setupSettings();
+
+    var hash = getHash();
+    if (hash) navigateTo(hash);
   } catch (err) {
     window.location.href = 'login.html';
+  }
+
+  function getHash() {
+    return window.location.hash.replace('#', '') || 'tickets';
+  }
+
+  function setupSidebar() {
+    var items = document.querySelectorAll('.dash-sidebar-item[data-section]');
+    items.forEach(function (item) {
+      item.addEventListener('click', function (e) {
+        e.preventDefault();
+        var section = this.getAttribute('data-section');
+        window.location.hash = '#' + section;
+      });
+    });
+
+    window.addEventListener('hashchange', function () {
+      navigateTo(getHash());
+    });
+
+    var toggle = document.getElementById('dashSidebarToggle');
+    var sidebar = document.getElementById('dashSidebar');
+    var overlay = document.getElementById('dashSidebarOverlay');
+
+    if (toggle) {
+      toggle.addEventListener('click', function () {
+        var isOpen = sidebar.classList.toggle('show');
+        toggle.setAttribute('aria-expanded', String(isOpen));
+        overlay.classList.toggle('active', isOpen);
+      });
+    }
+
+    if (overlay) {
+      overlay.addEventListener('click', function () {
+        sidebar.classList.remove('show');
+        overlay.classList.remove('active');
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      });
+    }
+  }
+
+  function navigateTo(section) {
+    currentSection = section;
+
+    document.querySelectorAll('.dash-section').forEach(function (s) {
+      s.style.display = 'none';
+    });
+    var target = document.getElementById('section-' + section);
+    if (target) target.style.display = 'block';
+
+    document.querySelectorAll('.dash-sidebar-item').forEach(function (item) {
+      item.classList.remove('active');
+      if (item.getAttribute('data-section') === section) {
+        item.classList.add('active');
+      }
+    });
+
+    var titleEl = document.getElementById('dashPageTitle');
+    if (titleEl) titleEl.textContent = sectionTitles[section] || 'Dashboard';
+  }
+
+  function setupLogout() {
+    var btn = document.getElementById('dashLogoutBtn');
+    if (btn) {
+      btn.addEventListener('click', async function () {
+        try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); } catch (_e) {}
+        window.location.href = 'index.html';
+      });
+    }
   }
 
   async function fetchAndRenderTickets() {
@@ -155,7 +240,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         if (result.success && result.url) {
           var avatarEl = document.getElementById('dashAvatar');
-          avatarEl.innerHTML = '<img src="' + escapeAttr(result.url) + '" alt="Profile" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" loading="lazy">';
+          avatarEl.innerHTML = '<img src="' + escapeAttr(result.url) + '" alt="Profile" loading="lazy">';
           showToast('Profile image updated!');
         } else {
           showToast(result.message || 'Upload failed.', 'error');

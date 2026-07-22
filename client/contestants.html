@@ -83,6 +83,29 @@
     <!-- ═══════════════════════════════════════
          CONTESTANTS GRID
          ═══════════════════════════════════════ -->
+    <section class="contestants-stats-section">
+      <div class="container">
+        <div class="contestants-stats-grid">
+          <div class="contestant-stat">
+            <span class="contestant-stat-num" id="statTotalContestants">0</span>
+            <span class="contestant-stat-label">Total Contestants</span>
+          </div>
+          <div class="contestant-stat">
+            <span class="contestant-stat-num" id="statContestantCategories">0</span>
+            <span class="contestant-stat-label">Categories</span>
+          </div>
+          <div class="contestant-stat">
+            <span class="contestant-stat-num">Registration</span>
+            <span class="contestant-stat-label">Current Phase</span>
+          </div>
+          <div class="contestant-stat">
+            <span class="contestant-stat-num">N2M+</span>
+            <span class="contestant-stat-label">Prize Pool</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="contestants-section">
       <div class="container">
         <div class="contestants-toolbar">
@@ -246,6 +269,13 @@
       render(this.value);
     });
 
+    function updateStats(contestants) {
+      var totalEl = document.getElementById('statTotalContestants');
+      var catEl = document.getElementById('statContestantCategories');
+      if (totalEl) totalEl.textContent = contestants.length;
+      if (catEl) catEl.textContent = new Set(contestants.map(function(c){ return c.category; })).size;
+    }
+
     fetch('/api/registrations/contestants')
       .then(function(r){
         if (!r.ok) throw new Error('Failed to fetch');
@@ -261,6 +291,7 @@
         });
         populateFilter();
         render('');
+        updateStats(allContestants);
       })
       .catch(function(err){
         loading.style.display = 'none';

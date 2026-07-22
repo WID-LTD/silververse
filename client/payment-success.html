@@ -246,7 +246,7 @@
     }
 
     function verifyPayment(txRefParam) {
-      fetch(`${API_BASE}/payments/verify/${encodeURIComponent(txRefParam)}`, {
+      fetch(`${API_BASE}/payment/verify/${encodeURIComponent(txRefParam)}`, {
         credentials: 'include'
       })
         .then(r => r.json())

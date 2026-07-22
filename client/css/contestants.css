@@ -359,6 +359,42 @@
   }
 }
 
+.contestants-stats-section {
+  padding: 40px 0;
+  background: var(--white);
+}
+
+.contestants-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.contestant-stat {
+  text-align: center;
+  padding: 24px 12px;
+  background: var(--off-white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+}
+
+.contestant-stat-num {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.contestant-stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--gray-500);
+}
+
 @media (max-width: 640px) {
   .contestants-grid {
     grid-template-columns: 1fr;
@@ -368,6 +404,9 @@
   }
   .contestants-hero-content h1 {
     font-size: 1.7rem;
+  }
+  .contestants-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 

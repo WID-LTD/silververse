@@ -1572,3 +1572,222 @@ section { padding: 100px 0; }
 @media (max-width: 640px) {
   .events-grid { grid-template-columns: 1fr; }
 }
+
+.hero-stats-bar {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  padding: 24px 0 0;
+  flex-wrap: wrap;
+}
+
+.hero-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.hero-stat-num {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--gold);
+}
+
+.hero-stat-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.6);
+}
+
+.about-values {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--gray-200);
+}
+
+.about-value {
+  font-size: 0.85rem;
+  color: var(--gray-600);
+  line-height: 1.5;
+}
+
+.about-value strong {
+  color: var(--primary);
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.criteria-section {
+  padding: 80px 0;
+  background: var(--white);
+}
+
+.criteria-table-wrap {
+  max-width: 800px;
+  margin: 0 auto;
+  overflow-x: auto;
+}
+
+.criteria-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-primary);
+}
+
+.criteria-table thead th {
+  padding: 14px 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--white);
+  background: var(--primary);
+  text-align: left;
+}
+
+.criteria-table tbody td {
+  padding: 14px 20px;
+  font-size: 0.88rem;
+  color: var(--gray-700);
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.criteria-table tbody td:first-child {
+  font-weight: 700;
+  color: var(--gray-800);
+}
+
+.criteria-table tbody td:nth-child(2) {
+  font-weight: 700;
+  color: var(--gold-dark);
+  white-space: nowrap;
+}
+
+.criteria-table tbody tr:nth-child(even) {
+  background: var(--gray-50);
+}
+
+.criteria-table tbody tr:hover {
+  background: var(--primary-50);
+}
+
+.special-prizes {
+  margin-top: 0;
+}
+
+.mini-prizes {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.mini-prize {
+  padding: 24px 16px;
+}
+
+.mini-prize .prize-place {
+  font-size: 0.78rem;
+  margin-bottom: 6px;
+}
+
+.mini-prize .prize-amount {
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+}
+
+.mini-prize .prize-desc {
+  font-size: 0.75rem;
+}
+
+.gallery-section .gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.gallery-section .gallery-grid img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  transition: transform 0.3s var(--ease-out-expo);
+}
+
+.gallery-section .gallery-grid img:hover {
+  transform: scale(1.03);
+}
+
+.gallery-section .gallery-grid img:nth-child(1) {
+  grid-column: span 2;
+  grid-row: span 2;
+  height: 100%;
+}
+
+@media (max-width: 768px) {
+  .gallery-section .gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .gallery-section .gallery-grid img {
+    height: 160px;
+  }
+  .gallery-section .gallery-grid img:nth-child(1) {
+    grid-column: span 2;
+    grid-row: span 1;
+    height: 200px;
+  }
+}
+
+.partner-tiers {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 0 24px;
+}
+
+.partner-tier {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 50px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.tier-badge.tier-diamond { background: linear-gradient(135deg, #b9f2ff, #e0e7ff); color: #1e3a5f; }
+.tier-badge.tier-gold { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #78350f; }
+.tier-badge.tier-silver { background: linear-gradient(135deg, #f1f5f9, #e2e8f0); color: #334155; }
+.tier-badge.tier-bronze { background: linear-gradient(135deg, #fed7aa, #fdba74); color: #431407; }
+
+@media (max-width: 768px) {
+  .hero-stats-bar {
+    gap: 20px;
+  }
+  .hero-stat-num {
+    font-size: 1.2rem;
+  }
+  .mini-prizes {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .partner-tier {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

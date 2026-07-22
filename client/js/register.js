@@ -588,9 +588,23 @@ document.addEventListener('DOMContentLoaded', function () {
             description: registrationData.ticketType + ' Ticket',
             logo: ''
           },
-          callback: function () {
-            showToast('Payment confirmed!', 'success');
-            window._goToStep(4);
+          callback: async function (response) {
+            try {
+              var verifyRes = await fetch('/api/payment/verify/' + encodeURIComponent(response.tx_ref), { credentials: 'same-origin' });
+              var verifyData = await verifyRes.json();
+              if (verifyData.success && verifyData.data && verifyData.data.status === 'successful') {
+                registrationData.paymentTxRef = response.tx_ref;
+                registrationData.paymentVerified = true;
+                showToast('Payment confirmed!', 'success');
+                window._goToStep(4);
+              } else {
+                showToast('Payment verification failed. Please contact support.', 'error');
+                if (payBtn) { payBtn.disabled = false; payBtn.innerHTML = 'Pay &#8358;' + amount.toLocaleString() + ' &rarr;'; }
+              }
+            } catch (_e) {
+              showToast('Payment verification error. Please contact support.', 'error');
+              if (payBtn) { payBtn.disabled = false; payBtn.innerHTML = 'Pay &#8358;' + amount.toLocaleString() + ' &rarr;'; }
+            }
           },
           onclose: function () {
             if (payBtn) {

@@ -363,10 +363,120 @@
   }
 }
 
+.hours-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.hours-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-md);
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.hours-day {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--gold-light);
+  margin-bottom: 6px;
+}
+
+.hours-time {
+  display: block;
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.7);
+  font-weight: 500;
+}
+
+.dept-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.dept-card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 28px 24px;
+  transition: transform 0.3s var(--ease-out-expo), box-shadow 0.3s;
+}
+
+.dept-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.dept-card h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin-bottom: 8px;
+}
+
+.dept-card p {
+  font-size: 0.82rem;
+  color: var(--gray-500);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.dept-link {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.dept-link:hover {
+  text-decoration: underline;
+}
+
+.map-placeholder {
+  text-align: center;
+  padding: 60px 24px;
+  background: var(--off-white);
+  border: 2px dashed var(--gray-300);
+  border-radius: var(--radius-lg);
+}
+
+.map-placeholder .map-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--primary-50);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  color: var(--primary);
+}
+
+.map-placeholder h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--gray-700);
+  margin-bottom: 8px;
+}
+
+.map-placeholder p {
+  font-size: 0.9rem;
+  color: var(--gray-400);
+}
+
+@media (max-width: 768px) {
+  .hours-grid { grid-template-columns: repeat(2, 1fr); }
+  .dept-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
 @media (max-width: 480px) {
-  .contact-cards {
-    grid-template-columns: 1fr;
-  }
+  .contact-cards { grid-template-columns: 1fr; }
+  .hours-grid { grid-template-columns: 1fr; }
+  .dept-grid { grid-template-columns: 1fr; }
 }
 
 
