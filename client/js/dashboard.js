@@ -19,8 +19,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     document.getElementById('dashWelcome').textContent = 'Welcome back, ' + (userInfo.displayName || userInfo.username || 'User') + '!';
     document.getElementById('dashEmail').textContent = userInfo.email || '';
 
+    var initialEl = document.querySelector('#dashAvatar .dash-avatar-initial');
     var initials = (userInfo.displayName || userInfo.username || '?').charAt(0).toUpperCase();
-    document.getElementById('dashAvatar').textContent = initials;
+    if (initialEl) initialEl.textContent = initials;
 
     if (userInfo.profileImage) {
       var avatarEl = document.getElementById('dashAvatar');
