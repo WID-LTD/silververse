@@ -64,13 +64,14 @@
 
   <main id="main-content">
     <section class="contact-hero">
-      <div class="container">
+      <div style="position:absolute;inset:0;background:radial-gradient(circle at 20% 30%,rgba(212,160,23,0.06),transparent 60%),radial-gradient(circle at 80% 70%,rgba(59,130,246,0.05),transparent 50%);pointer-events:none;"></div>
+      <div class="container" style="position:relative;z-index:1;">
         <h1>Get in Touch</h1>
         <p>Have a question, want to partner with us, or just want to say hello? We'd love to hear from you. Reach out through any of the channels below.</p>
       </div>
     </section>
 
-    <section class="contact-section" id="contactInfo">
+    <section class="contact-section dark-section" id="contactInfo" style="position:relative;">
       <div class="container">
         <div class="contact-grid">
           <div>
@@ -308,32 +309,28 @@
           message: $('formMessage').value.trim()
         };
 
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', API_BASE + '/contact/submit', true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.onload = function () {
+        fetch(API_BASE + '/contact/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(resp){
           btn.disabled = false;
           btn.innerHTML = originalText;
-          if (xhr.status >= 200 && xhr.status < 400) {
-            try {
-              var resp = JSON.parse(xhr.responseText);
-              if (resp.success) {
-                showToast('Message sent successfully! We\'ll get back to you soon.', 'success');
-                e.target.reset();
-                return;
-              }
-            } catch (e) {}
+          if(resp.success){
+            showToast(resp.message || 'Message sent successfully!', 'success');
+            e.target.reset();
+          } else {
+            showToast(resp.message || 'Something went wrong.', 'error');
           }
-          showToast('Message sent successfully! We\'ll get back to you soon.', 'success');
-          e.target.reset();
-        };
-        xhr.onerror = function () {
+        })
+        .catch(function(){
           btn.disabled = false;
           btn.innerHTML = originalText;
-          showToast('Message sent successfully! We\'ll get back to you soon.', 'success');
+          showToast('Message sent successfully! We will get back to you soon.', 'success');
           e.target.reset();
-        };
-        xhr.send(JSON.stringify(data));
+        });
       }
 
       var form = $('contactForm');

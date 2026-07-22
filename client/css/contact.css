@@ -149,6 +149,98 @@
   line-height: 1.6;
 }
 
+
+/* ─── Dark Section Override ─── */
+.contact-section.dark-section {
+  background: var(--dark);
+}
+
+.contact-section.dark-section .contact-card {
+  background: var(--dark-surface);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+}
+
+.contact-section.dark-section .contact-card:hover {
+  border-color: rgba(212,160,23,0.3);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(212,160,23,0.1);
+}
+
+.contact-section.dark-section .contact-card-title {
+  color: var(--gold-light);
+}
+
+.contact-section.dark-section .contact-card-value {
+  color: rgba(255,255,255,0.85);
+}
+
+.contact-section.dark-section .contact-card-value a {
+  color: rgba(255,255,255,0.85);
+}
+
+.contact-section.dark-section .contact-card-value a:hover {
+  color: var(--gold-light);
+}
+
+.contact-section.dark-section .contact-card-icon.gold {
+  background: rgba(212,160,23,0.15);
+  color: var(--gold-light);
+}
+
+.contact-section.dark-section .contact-card-address {
+  color: rgba(255,255,255,0.6);
+}
+
+.contact-section.dark-section .contact-form-wrapper {
+  background: var(--dark-surface);
+  border-color: rgba(255,255,255,0.08);
+}
+
+.contact-section.dark-section .contact-form-wrapper h3 {
+  color: var(--white);
+}
+
+.contact-section.dark-section .contact-form-wrapper > p {
+  color: rgba(255,255,255,0.5);
+}
+
+.contact-section.dark-section .contact-form .form-group label {
+  color: rgba(255,255,255,0.7);
+}
+
+.contact-section.dark-section .contact-form .form-group input,
+.contact-section.dark-section .contact-form .form-group textarea {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.12);
+  color: var(--white);
+}
+
+.contact-section.dark-section .contact-form .form-group input:focus,
+.contact-section.dark-section .contact-form .form-group textarea:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(212,160,23,0.15);
+}
+
+.contact-section.dark-section .contact-form .form-group input::placeholder,
+.contact-section.dark-section .contact-form .form-group textarea::placeholder {
+  color: rgba(255,255,255,0.3);
+}
+
+.contact-section.dark-section .social-link.instagram {
+  background: rgba(244,67,54,0.12);
+  color: #f48fb1;
+}
+
+.contact-section.dark-section .social-link.twitter {
+  background: rgba(33,150,243,0.12);
+  color: #90caf9;
+}
+
+.contact-section.dark-section .social-link.facebook {
+  background: rgba(63,81,181,0.12);
+  color: #9fa8da;
+}
+
 .whatsapp-section {
   text-align: center;
   padding: 48px 0;
