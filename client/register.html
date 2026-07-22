@@ -129,6 +129,50 @@
     </div>
   </main>
 
+  <!-- Terms & Conditions Modal -->
+  <div id="tcModal" class="tc-modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="tcTitle">
+    <div class="tc-modal">
+      <div class="tc-modal-header">
+        <h3 id="tcTitle">Terms &amp; Conditions</h3>
+        <button type="button" class="tc-close" aria-label="Close terms">&times;</button>
+      </div>
+      <div class="tc-modal-body">
+        <h4>Voices &amp; Visions Festival 2026 — Terms of Participation</h4>
+        <ol>
+          <li><strong>Eligibility:</strong> Participants must be 18 years or older or have guardian consent.</li>
+          <li><strong>Registration:</strong> All registrations are subject to verification. Providing false information may result in disqualification.</li>
+          <li><strong>Payment:</strong> Ticket payments are non-refundable unless the event is cancelled by the organisers.</li>
+          <li><strong>Code of Conduct:</strong> All attendees, contestants, and volunteers must treat others with respect. Harassment, discrimination, or disruptive behaviour will not be tolerated.</li>
+          <li><strong>Media Release:</strong> By attending, you grant SilverVerse the right to use photographs and video footage for promotional purposes.</li>
+          <li><strong>Liability:</strong> SilverVerse, WID Ltd, and its partners are not liable for personal injury, loss, or damage to property during the event.</li>
+          <li><strong>Cancellation:</strong> The organisers reserve the right to cancel, reschedule, or modify the event with reasonable notice.</li>
+          <li><strong>Privacy:</strong> Your personal data will be used solely for event administration and will not be shared with third parties without consent.</li>
+        </ol>
+        <p>By checking the box and completing registration, you agree to these terms.</p>
+      </div>
+      <div class="tc-modal-footer">
+        <button type="button" class="btn btn-primary" onclick="closeTCModal()">I Understand</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openTCModal() {
+      document.getElementById('tcModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+    function closeTCModal() {
+      document.getElementById('tcModal').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      var closeBtn = document.querySelector('.tc-close');
+      if (closeBtn) closeBtn.addEventListener('click', closeTCModal);
+      var overlay = document.getElementById('tcModal');
+      if (overlay) overlay.addEventListener('click', function(e) { if (e.target === this) closeTCModal(); });
+    });
+  </script>
+
   <footer class="footer no-print">
     <div class="container">
       <div class="footer-bottom">

@@ -124,11 +124,11 @@ document.addEventListener('DOMContentLoaded', function () {
         '<div id="volunteerSubs" style="display:none;">' +
           '<h3 style="margin-top:24px;">Select your area</h3>' +
           '<div class="subcategory-grid">' +
-            '<div class="subcat-option"><input type="radio" name="volunteerArea" id="vol-media" value="Media"><label for="vol-media"><span class="subcat-icon">📷</span>Media</label></div>' +
-            '<div class="subcat-option"><input type="radio" name="volunteerArea" id="vol-logistics" value="Logistics"><label for="vol-logistics"><span class="subcat-icon">📦</span>Logistics</label></div>' +
-            '<div class="subcat-option"><input type="radio" name="volunteerArea" id="vol-registration" value="Registration"><label for="vol-registration"><span class="subcat-icon">📋</span>Registration</label></div>' +
-            '<div class="subcat-option"><input type="radio" name="volunteerArea" id="vol-hospitality" value="Hospitality"><label for="vol-hospitality"><span class="subcat-icon">🤝</span>Hospitality</label></div>' +
-            '<div class="subcat-option"><input type="radio" name="volunteerArea" id="vol-security" value="Security"><label for="vol-security"><span class="subcat-icon">🛡️</span>Security</label></div>' +
+            '<div class="subcat-option"><input type="radio" name="volunteerArea" id="vol-media" value="Media"><label for="vol-media"><span class="subcat-icon"><img src="assets/images/volunteer-media.jpg" alt="Media" width="24" height="24" style="border-radius:4px;object-fit:cover;"></span>Media</label></div>' +
+            '<div class="subcat-option"><input type="radio" name="volunteerArea" id="vol-logistics" value="Logistics"><label for="vol-logistics"><span class="subcat-icon"><img src="assets/images/volunteer-logistics.jpg" alt="Logistics" width="24" height="24" style="border-radius:4px;object-fit:cover;"></span>Logistics</label></div>' +
+            '<div class="subcat-option"><input type="radio" name="volunteerArea" id="vol-registration" value="Registration"><label for="vol-registration"><span class="subcat-icon"><img src="assets/images/volunteer-checkin.jpg" alt="Registration" width="24" height="24" style="border-radius:4px;object-fit:cover;"></span>Registration</label></div>' +
+            '<div class="subcat-option"><input type="radio" name="volunteerArea" id="vol-hospitality" value="Hospitality"><label for="vol-hospitality"><span class="subcat-icon"><img src="assets/images/volunteer-hospitality.jpg" alt="Hospitality" width="24" height="24" style="border-radius:4px;object-fit:cover;"></span>Hospitality</label></div>' +
+            '<div class="subcat-option"><input type="radio" name="volunteerArea" id="vol-security" value="Security"><label for="vol-security"><span class="subcat-icon"><img src="assets/images/volunteer-security.jpg" alt="Security" width="24" height="24" style="border-radius:4px;object-fit:cover;"></span>Security</label></div>' +
           '</div>' +
         '</div>' +
         '<div id="speakerSubs" style="display:none;">' +
@@ -321,7 +321,7 @@ document.addEventListener('DOMContentLoaded', function () {
       '<div class="form-group">' +
         '<label class="checkbox-wrap" style="display:flex;align-items:center;gap:8px;cursor:pointer;">' +
           '<input type="checkbox" id="agree" required style="width:16px;height:16px;accent-color:var(--primary);cursor:pointer;">' +
-          '<span style="font-size:0.85rem;color:var(--gray-600);">I agree to the terms and conditions of the Voices &amp; Visions Festival 2026 *</span>' +
+          '<span style="font-size:0.85rem;color:var(--gray-600);">I agree to the <a href="#" onclick="event.preventDefault();openTCModal();" style="color:var(--primary);text-decoration:underline;">terms and conditions</a> of the Voices &amp; Visions Festival 2026 *</span>' +
         '</label>' +
       '</div>' +
       '<div class="form-actions">' +

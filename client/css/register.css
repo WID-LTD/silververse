@@ -209,7 +209,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(transparent, rgba(10,15,44,0.9));
+  background: linear-gradient(transparent, rgba(10,15,44,0.6));
   padding: 16px 12px 12px;
   color: var(--white);
 }
@@ -765,6 +765,128 @@
 }
 
 /* ─── Responsive ─── */
+/* ─── Volunteer Subcategory Icon ─── */
+.subcat-icon {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.subcat-icon img {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+/* ─── Terms & Conditions Modal ─── */
+.tc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,15,44,0.7);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease;
+}
+
+.tc-modal {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  max-width: 640px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-2xl);
+  animation: scaleIn 0.25s var(--ease-out-expo);
+}
+
+.tc-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.tc-modal-header h3 {
+  font-size: 1.1rem;
+  color: var(--gray-800);
+}
+
+.tc-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--gray-100);
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-500);
+  transition: all 0.2s;
+}
+
+.tc-close:hover {
+  background: var(--gray-200);
+  color: var(--gray-700);
+}
+
+.tc-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  color: var(--gray-600);
+}
+
+.tc-modal-body h4 {
+  font-size: 0.95rem;
+  color: var(--gray-800);
+  margin-bottom: 16px;
+}
+
+.tc-modal-body ol {
+  padding-left: 20px;
+}
+
+.tc-modal-body ol li {
+  margin-bottom: 12px;
+}
+
+.tc-modal-body p {
+  margin-top: 16px;
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+.tc-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--gray-200);
+  display: flex;
+  justify-content: flex-end;
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @media (max-width: 768px) {
   .register-card { padding: 28px 20px; margin: 0 16px; border-radius: var(--radius-lg); }
   .category-selector { grid-template-columns: repeat(2, 1fr); }

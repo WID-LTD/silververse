@@ -22,6 +22,14 @@
   overflow: hidden;
 }
 
+.auth-diagonal-slice {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+}
+
 .auth-visual::before {
   content: '';
   position: absolute;
@@ -32,6 +40,7 @@
   border-radius: 50%;
   background: radial-gradient(circle, rgba(212,160,23,0.1), transparent 70%);
   pointer-events: none;
+  z-index: 1;
 }
 
 .auth-visual::after {
@@ -44,6 +53,7 @@
   border-radius: 50%;
   background: radial-gradient(circle, rgba(59,130,246,0.08), transparent 70%);
   pointer-events: none;
+  z-index: 1;
 }
 
 .auth-visual-content {

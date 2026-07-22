@@ -396,7 +396,7 @@ section { padding: 100px 0; }
 /* ══════════════════════════════════════════════════
    ABOUT
    ══════════════════════════════════════════════════ */
-.about-section { background: var(--white); }
+.about-section { background: var(--off-white); }
 
 .about-grid {
   display: grid;
@@ -971,7 +971,9 @@ section { padding: 100px 0; }
 /* ══════════════════════════════════════════════════
    BENEFITS
    ══════════════════════════════════════════════════ */
-.benefits-section { background: var(--white); }
+.benefits-section {
+  background: linear-gradient(180deg, var(--white) 0%, var(--off-white) 100%);
+}
 
 .benefits-grid {
   display: grid;
@@ -1046,7 +1048,7 @@ section { padding: 100px 0; }
 /* ══════════════════════════════════════════════════
    FAQ
    ══════════════════════════════════════════════════ */
-.faq-section { background: var(--white); }
+.faq-section { background: var(--off-white); }
 
 .faq-list {
   max-width: 720px;
@@ -1164,16 +1166,11 @@ section { padding: 100px 0; }
 }
 
 .testimonial-card .author-avatar {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: var(--gradient-premium);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--white);
-  font-weight: 700;
-  font-size: 0.85rem;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
 .testimonial-card .author-name {
@@ -1252,6 +1249,16 @@ section { padding: 100px 0; }
   width: 800px; height: 800px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(212,160,23,0.12), transparent 70%);
+}
+
+.cta-section::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('../assets/images/hero-event.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.08;
 }
 
 .cta-section h2 {
