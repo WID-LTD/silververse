@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   var allRegistrations = [];
   var allUsers = [];
   var allEvents = [];
+  var allVideos = [];
 
   try {
     var res = await fetch('/api/auth/me', { credentials: 'same-origin' });
@@ -100,7 +101,8 @@ document.addEventListener('DOMContentLoaded', async function () {
       registrations: 'Registrations',
       users: 'Users',
       events: 'Events',
-      checkin: 'Check-in'
+      checkin: 'Check-in',
+      videos: 'Videos'
     };
     document.getElementById('pageTitle').textContent = titles[section] || 'Dashboard';
 
@@ -109,6 +111,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     else if (section === 'users') loadUsers();
     else if (section === 'events') loadEvents();
     else if (section === 'checkin') loadCheckin();
+    else if (section === 'videos') loadVideos();
   }
 
   function setupLogout() {
@@ -684,6 +687,184 @@ document.addEventListener('DOMContentLoaded', async function () {
       }
     } catch (_e) {
       showToast('Failed to delete registration.', 'error');
+    }
+  }
+
+  /* ═══ VIDEOS ═══ */
+  async function loadVideos() {
+    try {
+      var res = await fetch('/api/videos', { credentials: 'same-origin' });
+      var data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        allVideos = data.data;
+      }
+    } catch (_e) {}
+    renderVideos(allVideos);
+  }
+
+  function renderVideos(videos) {
+    var tbody = document.getElementById('videoTableBody');
+    if (!tbody) return;
+
+    if (videos.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray-400);">No videos found. Add your first video!</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = videos.map(function (v) {
+      var typeBadge = v.videoType === 'youtube'
+        ? '<span class="badge badge-red">YouTube</span>'
+        : '<span class="badge badge-blue">Upload</span>';
+
+      return '<tr>' +
+        '<td><strong>' + escapeHtml(v.title || '') + '</strong></td>' +
+        '<td>' + escapeHtml(v.eventId ? 'Event #' + v.eventId : '\u2014') + '</td>' +
+        '<td>' + escapeHtml(v.category || '') + '</td>' +
+        '<td>' + typeBadge + '</td>' +
+        '<td>' + escapeHtml(v.duration || '\u2014') + '</td>' +
+        '<td>' +
+          '<div class="cell-actions">' +
+            '<button class="action-btn" title="Edit video" data-action="edit-video" data-videoid="' + v.id + '">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>' +
+            '</button>' +
+            '<button class="action-btn action-danger" title="Delete video" data-action="delete-video" data-videoid="' + v.id + '">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+            '</button>' +
+          '</div>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+
+    tbody.querySelectorAll('[data-action]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var action = this.getAttribute('data-action');
+        var videoId = this.getAttribute('data-videoid');
+        if (action === 'edit-video') editVideo(videoId);
+        else if (action === 'delete-video') apiDeleteVideo(videoId);
+      });
+    });
+  }
+
+  var addVideoBtn = document.getElementById('addVideoBtn');
+  if (addVideoBtn) {
+    addVideoBtn.addEventListener('click', function () {
+      openModal('Add Video',
+        '<div class="form-group"><label for="videoTitle">Title *</label><input type="text" id="videoTitle" placeholder="Video title"></div>' +
+        '<div class="form-group"><label for="videoType">Type</label><select id="videoType">' +
+          '<option value="youtube">YouTube URL</option>' +
+          '<option value="upload">Upload File</option>' +
+        '</select></div>' +
+        '<div class="form-group" id="videoUrlGroup"><label for="videoUrl">YouTube URL *</label><input type="url" id="videoUrl" placeholder="https://youtube.com/watch?v=..."></div>' +
+        '<div class="form-row">' +
+          '<div class="form-group"><label for="videoCategory">Category</label><input type="text" id="videoCategory" placeholder="e.g. Music, Dance"></div>' +
+          '<div class="form-group"><label for="videoDuration">Duration</label><input type="text" id="videoDuration" placeholder="e.g. 12:34"></div>' +
+        '</div>',
+        '<button class="btn btn-outline btn-sm" id="modalCancelBtn">Cancel</button>' +
+        '<button class="btn btn-primary btn-sm" id="modalSaveBtn">Save Video</button>'
+      );
+
+      document.getElementById('videoType').addEventListener('change', function () {
+        var group = document.getElementById('videoUrlGroup');
+        if (group) group.style.display = this.value === 'youtube' ? 'block' : 'none';
+      });
+
+      document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
+      document.getElementById('modalSaveBtn').addEventListener('click', async function () {
+        var title = document.getElementById('videoTitle').value.trim();
+        var videoType = document.getElementById('videoType').value;
+        var videoUrl = document.getElementById('videoUrl') ? document.getElementById('videoUrl').value.trim() : '';
+        var category = document.getElementById('videoCategory') ? document.getElementById('videoCategory').value.trim() : '';
+        var duration = document.getElementById('videoDuration') ? document.getElementById('videoDuration').value.trim() : '';
+
+        if (!title || (videoType === 'youtube' && !videoUrl)) {
+          showToast('Title and URL are required.', 'error');
+          return;
+        }
+
+        try {
+          var res = await fetch('/api/videos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ title, videoType, videoUrl, category, duration })
+          });
+          var result = await res.json();
+          if (result.success) {
+            allVideos.push(result.data);
+            renderVideos(allVideos);
+            closeModal();
+            showToast('Video added successfully!');
+          } else {
+            showToast(result.message || 'Failed to add video.', 'error');
+          }
+        } catch (_e) {
+          showToast('Failed to add video.', 'error');
+        }
+      });
+    });
+  }
+
+  async function editVideo(id) {
+    var video = allVideos.find(function (v) { return String(v.id) === String(id); });
+    if (!video) return;
+
+    openModal('Edit Video',
+      '<div class="form-group"><label for="videoTitle">Title</label><input type="text" id="videoTitle" value="' + escapeAttr(video.title || '') + '"></div>' +
+      '<div class="form-group"><label for="videoUrl">YouTube URL</label><input type="url" id="videoUrl" value="' + escapeAttr(video.videoUrl || '') + '"></div>' +
+      '<div class="form-row">' +
+        '<div class="form-group"><label for="videoCategory">Category</label><input type="text" id="videoCategory" value="' + escapeAttr(video.category || '') + '"></div>' +
+        '<div class="form-group"><label for="videoDuration">Duration</label><input type="text" id="videoDuration" value="' + escapeAttr(video.duration || '') + '"></div>' +
+      '</div>',
+      '<button class="btn btn-outline btn-sm" id="modalCancelBtn">Cancel</button>' +
+      '<button class="btn btn-primary btn-sm" id="modalSaveBtn">Update Video</button>'
+    );
+
+    document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
+    document.getElementById('modalSaveBtn').addEventListener('click', async function () {
+      var title = document.getElementById('videoTitle').value.trim();
+      var videoUrl = document.getElementById('videoUrl').value.trim();
+      var category = document.getElementById('videoCategory').value.trim();
+      var duration = document.getElementById('videoDuration').value.trim();
+
+      if (!title) { showToast('Title is required.', 'error'); return; }
+
+      try {
+        var res = await fetch('/api/videos/' + id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ title, videoUrl, category, duration })
+        });
+        var result = await res.json();
+        if (result.success) {
+          var idx = allVideos.findIndex(function (v) { return String(v.id) === String(id); });
+          if (idx !== -1) allVideos[idx] = result.data;
+          renderVideos(allVideos);
+          closeModal();
+          showToast('Video updated!');
+        } else {
+          showToast(result.message || 'Failed.', 'error');
+        }
+      } catch (_e) {
+        showToast('Failed to update video.', 'error');
+      }
+    });
+  }
+
+  async function apiDeleteVideo(id) {
+    if (!confirm('Delete this video?')) return;
+    try {
+      var res = await fetch('/api/videos/' + id, { method: 'DELETE', credentials: 'same-origin' });
+      var data = await res.json();
+      if (data.success) {
+        showToast(data.message || 'Video deleted.');
+        allVideos = allVideos.filter(function (v) { return String(v.id) !== String(id); });
+        renderVideos(allVideos);
+      } else {
+        showToast(data.message || 'Failed.', 'error');
+      }
+    } catch (_e) {
+      showToast('Failed to delete video.', 'error');
     }
   }
 

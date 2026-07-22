@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* ── Countdown Timer ── */
-  var TARGET_DATE = new Date('2026-08-15T10:00:00+01:00').getTime();
+  var TARGET_DATE = new Date('2026-08-01T09:00:00+01:00').getTime();
 
   function renderCountdown(el) {
     var diff = TARGET_DATE - Date.now();

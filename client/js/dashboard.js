@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       var statusLabel = statusActive ? 'Verified' : 'Pending';
 
       var eventName = t.eventName || 'Voices & Visions Festival 2026';
-      var eventDate = t.eventDate ? formatDate(t.eventDate) : '15 August 2026';
+      var eventDate = t.eventDate ? formatDate(t.eventDate) : '1 August 2026';
       var eventVenue = t.eventVenue || 'Rochas Foundation, Ideato, Orlu, Imo State';
 
       var profileImgHtml = '';

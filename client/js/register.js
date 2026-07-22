@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
     talentDescription: '',
     perfTime: '',
     ticketType: 'Regular',
-    amount: 3000
+    amount: 1000
   };
 
   // ── STEP 1: Category Selection ──
@@ -204,6 +204,7 @@ document.addEventListener('DOMContentLoaded', function () {
           '<label for="perfTime">Preferred Performance Time</label>' +
           '<select id="perfTime">' +
             '<option value="">No preference</option>' +
+            '<option value="9:00 AM">9:00 AM</option>' +
             '<option value="10:00 AM">10:00 AM</option>' +
             '<option value="11:00 AM">11:00 AM</option>' +
             '<option value="11:45 AM">11:45 AM</option>' +
@@ -226,9 +227,9 @@ document.addEventListener('DOMContentLoaded', function () {
       '<div class="form-group">' +
         '<label for="ticketType">Ticket Type *</label>' +
         '<select id="ticketType">' +
-          '<option value="Regular">Regular — &#8358;3,000</option>' +
+          '<option value="Regular">Regular — &#8358;1,000</option>' +
           '<option value="VIP">VIP — &#8358;5,000</option>' +
-          '<option value="VVIP">VVIP — &#8358;10,000</option>' +
+          '<option value="VVIP">VVIP (Table for Four) — &#8358;10,000</option>' +
         '</select>' +
       '</div>' +
       '<div class="form-actions">' +
@@ -252,8 +253,8 @@ document.addEventListener('DOMContentLoaded', function () {
   // ── STEP 3: Payment ──
   function renderStep3() {
     var step3 = document.getElementById('step3');
-    var prices = { Regular: 3000, VIP: 5000, VVIP: 10000 };
-    var amount = prices[registrationData.ticketType] || 3000;
+    var prices = { Regular: 1000, VIP: 5000, VVIP: 10000 };
+    var amount = prices[registrationData.ticketType] || 1000;
 
     step3.innerHTML = '' +
       '<h2>Payment</h2>' +
@@ -485,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ── Payment ──
   function updatePaymentSummary() {
-    var prices = { Regular: 3000, VIP: 5000, VVIP: 10000 };
+    var prices = { Regular: 1000, VIP: 5000, VVIP: 10000 };
     var ticketSelect = document.getElementById('ticketType');
     var type = ticketSelect ? ticketSelect.value : 'Regular';
     registrationData.ticketType = type;
@@ -511,8 +512,8 @@ document.addEventListener('DOMContentLoaded', function () {
   fetchPaymentConfig();
 
   window._initPayment = async function () {
-    var prices = { Regular: 3000, VIP: 5000, VVIP: 10000 };
-    var amount = prices[registrationData.ticketType] || 3000;
+    var prices = { Regular: 1000, VIP: 5000, VVIP: 10000 };
+    var amount = prices[registrationData.ticketType] || 1000;
     var payBtn = document.getElementById('payBtn');
 
     if (flwPublicKey && typeof FlutterwaveCheckout !== 'undefined') {

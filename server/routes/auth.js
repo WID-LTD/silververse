@@ -110,8 +110,15 @@ router.post('/login', async (req, res) => {
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
       }
 
-      if (user.known_ip !== req.clientIP) {
+      if (!user.known_ip) {
+        // Auto-set if NULL (self-healing for pre-existing users)
         await sql`UPDATE users SET known_ip = ${req.clientIP}, updated_at = NOW() WHERE id = ${user.id}`;
+      } else if (!user.known_ip.split(',').includes(req.clientIP)) {
+        // Add new IP to comma-separated list (max 5)
+        const ips = user.known_ip.split(',').filter(Boolean);
+        ips.push(req.clientIP);
+        const trimmed = ips.slice(-5).join(',');
+        await sql`UPDATE users SET known_ip = ${trimmed}, updated_at = NOW() WHERE id = ${user.id}`;
       }
 
       req.session.userId = user.id;
@@ -133,10 +140,14 @@ router.post('/login', async (req, res) => {
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
       }
 
-      if (user.known_ip !== req.clientIP) {
+      if (!user.known_ip) {
         user.known_ip = req.clientIP;
-        user.updated_at = new Date().toISOString();
+      } else if (!user.known_ip.split(',').includes(req.clientIP)) {
+        const ips = user.known_ip.split(',').filter(Boolean);
+        ips.push(req.clientIP);
+        user.known_ip = ips.slice(-5).join(',');
       }
+      user.updated_at = new Date().toISOString();
 
       req.session.userId = user.id;
       req.session.username = user.username;
@@ -177,20 +188,22 @@ router.post('/forgot', async (req, res) => {
         return res.status(404).json({ success: false, message: 'User not found' });
       }
       const user = result[0];
-      if (user.known_ip === req.clientIP) {
+      const knownIps = (user.known_ip || '').split(',').filter(Boolean);
+      if (knownIps.length === 0 || knownIps.includes(req.clientIP)) {
         return res.json({ success: true, canReset: true });
       } else {
-        return res.json({ success: true, canReset: false, message: 'Contact admin at support@silververse.com' });
+        return res.json({ success: true, canReset: false, message: 'Contact admin at silververse.ng@gmail.com' });
       }
     } else {
       const users = getMemUsers();
       const user = users.find(u => u.username === lowerUsername);
       if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-      if (user.known_ip === req.clientIP) {
+      const knownIps = (user.known_ip || '').split(',').filter(Boolean);
+      if (knownIps.length === 0 || knownIps.includes(req.clientIP)) {
         return res.json({ success: true, canReset: true });
       } else {
-        return res.json({ success: true, canReset: false, message: 'Contact admin at support@silververse.com' });
+        return res.json({ success: true, canReset: false, message: 'Contact admin at silververse.ng@gmail.com' });
       }
     }
   } catch (err) {
@@ -217,7 +230,8 @@ router.post('/reset-password', async (req, res) => {
         return res.status(404).json({ success: false, message: 'User not found' });
       }
       const user = result[0];
-      if (user.known_ip !== req.clientIP) {
+      const knownIps = (user.known_ip || '').split(',').filter(Boolean);
+      if (knownIps.length > 0 && !knownIps.includes(req.clientIP)) {
         return res.status(403).json({ success: false, message: 'IP mismatch. Contact admin.' });
       }
       await sql`UPDATE users SET password_hash = ${hash}, updated_at = NOW() WHERE id = ${user.id}`;
@@ -226,7 +240,8 @@ router.post('/reset-password', async (req, res) => {
       const users = getMemUsers();
       const user = users.find(u => u.username === lowerUsername);
       if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-      if (user.known_ip !== req.clientIP) {
+      const knownIps = (user.known_ip || '').split(',').filter(Boolean);
+      if (knownIps.length > 0 && !knownIps.includes(req.clientIP)) {
         return res.status(403).json({ success: false, message: 'IP mismatch. Contact admin.' });
       }
       user.password_hash = hash;

@@ -6,7 +6,7 @@ services:
     rootDir: .
     buildCommand: cd server && npm install
     startCommand: cd server && node server.js
-    healthCheckPath: /api/stats
+    healthCheckPath: /api/health
     autoDeploy: true
     envVars:
       # ── Core ──
@@ -25,7 +25,7 @@ services:
 
       # ── Session ──
       - key: SESSION_SECRET
-        generateValue: true
+        sync: false
 
       # ── Admin ──
       - key: ADMIN_PASSWORD
@@ -41,7 +41,7 @@ services:
       - key: R2_BUCKET
         value: silververse-uploads
       - key: R2_PUBLIC_URL
-        value: https://pub-0bb669c8f2f1471a9a771c8d1ba527eb.r2.dev
+        sync: false
 
       # ── Flutterwave ──
       - key: FLW_PUBLIC_KEY

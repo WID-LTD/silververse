@@ -15,6 +15,9 @@ const { trackIP } = require('./middleware/ip');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
+// ── Trust Proxy (required for correct IP behind Render/Cloudflare) ──
+app.set('trust proxy', true);
+
 // ── CORS ──
 app.use((req, res, next) => {
   const origin = process.env.CORS_ORIGIN || '*';
@@ -54,7 +57,12 @@ let sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'silververse-secret-key-change-in-prod',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 7 * 24 * 60 * 60 * 1000, httpOnly: true },
+  cookie: {
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax'
+  },
 });
 app.use(sessionMiddleware);
 
@@ -152,6 +160,8 @@ app.use('/api/payment', require('./routes/payments'));
 app.use('/api/ticket', require('./routes/tickets'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/verify', require('./routes/verify'));
+app.use('/api/events', require('./routes/events'));
+app.use('/api/videos', require('./routes/videos'));
 
 // ── QR Code (public) ──
 app.get('/api/qr/:id', async (req, res) => {
@@ -167,7 +177,17 @@ app.get('/api/qr/:id', async (req, res) => {
   }
 });
 
-// ── Public stats / health check ──
+// ── Health check (for Uptime Robot) ──
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    uptime: Math.floor(process.uptime()),
+    db: isDBEnabled() ? 'connected' : 'memory',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// ── Public stats ──
 app.get('/api/stats', async (req, res) => {
   try {
     if (isDBEnabled()) {
@@ -232,7 +252,7 @@ setupDB(sql).then(() => {
     console.log(`\n🎤 SilverVerse API Server`);
     console.log(`   API running at http://localhost:${PORT}`);
     console.log(`   DB: ${isDBEnabled() ? 'Connected' : 'In-memory fallback'}`);
-    console.log(`   Routes: /api/auth, /api/registrations, /api/payment, /api/ticket, /api/admin, /api/verify, /api/stats\n`);
+    console.log(`   Routes: /api/auth, /api/registrations, /api/payment, /api/ticket, /api/admin, /api/verify, /api/events, /api/videos, /api/stats, /api/health, /api/upload, /api/qr\n`);
   });
 }).catch(err => {
   console.error('Failed to start server:', err);

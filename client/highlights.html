@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Festival Highlights | SilverVerse</title>
+  <meta name="description" content="Watch festival highlights, performances, and behind-the-scenes moments from SilverVerse Voices & Visions Festival 2026.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/icons.css">
+  <link rel="stylesheet" href="css/videos.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <nav class="navbar navbar-scrolled no-print" id="mainNav">
+    <div class="container">
+      <a href="index.html" class="navbar-brand">
+        <img src="public/silververse.png" alt="SilverVerse" width="40" height="40" style="border-radius:8px">
+        SilverVerse
+      </a>
+      <button class="mobile-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="navLinks">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <ul class="navbar-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="events.html">Events</a></li>
+        <li><a href="videos.html">Videos</a></li>
+        <li><a href="highlights.html" class="active">Highlights</a></li>
+        <li><a href="register.html">Register</a></li>
+        <li id="navAuth"></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main id="main-content">
+    <section class="videos-hero">
+      <div class="container">
+        <h1>Festival Highlights</h1>
+        <p>Relive the best moments from the Voices & Visions Festival 2026</p>
+      </div>
+    </section>
+
+    <section class="videos-page">
+      <div class="container">
+        <div id="highlightsContent">
+          <div class="videos-loading">
+            <div class="spinner"></div>
+            <p>Checking authentication...</p>
+          </div>
+        </div>
+
+        <div class="videos-filters" id="videosFilters" style="display:none;"></div>
+        <div class="videos-grid" id="videosGrid" style="display:none;"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer no-print">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2026 SilverVerse. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/nav.js"></script>
+  <script src="js/highlights.js"></script>
+</body>
+</html>

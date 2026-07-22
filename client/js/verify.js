@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function () {
       : '<span class="badge badge-yellow">Awaiting Check-in</span>';
 
     var eventName = ticket.eventName || 'Voices & Visions Festival 2026';
-    var eventDate = ticket.eventDate ? formatDate(ticket.eventDate) : '15 August 2026';
+    var eventDate = ticket.eventDate ? formatDate(ticket.eventDate) : '1 August 2026';
     var eventVenue = ticket.eventVenue || 'Rochas Foundation, Ideato, Orlu, Imo State';
 
     contentEl.innerHTML =

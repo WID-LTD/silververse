@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var statusClass = statusLabel === 'APPROVED' ? 'status-approved' : 'status-pending';
 
     var eventName = data.eventName || 'Voices & Visions Festival 2026';
-    var eventDate = data.eventDate ? formatDate(data.eventDate) : '15 August 2026';
+    var eventDate = data.eventDate ? formatDate(data.eventDate) : '1 August 2026';
     var eventVenue = data.eventVenue || 'Rochas Foundation, Ideato, Orlu, Imo State';
 
     var profileImgHtml = '';
@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function () {
           '</div>' +
           '<div class="ticket-left-footer">' +
             '<div class="ticket-field"><div class="field-label">Date</div><div class="field-value">' + escapeHtml(eventDate) + '</div></div>' +
-            '<div class="ticket-field"><div class="field-label">Time</div><div class="field-value">10:00 AM WAT</div></div>' +
+            '<div class="ticket-field"><div class="field-label">Time</div><div class="field-value">9:00 AM Prompt</div></div>' +
             '<div class="ticket-field"><div class="field-label">Venue</div><div class="field-value">' + escapeHtml(eventVenue) + '</div></div>' +
           '</div>' +
         '</div>' +

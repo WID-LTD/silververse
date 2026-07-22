@@ -196,9 +196,7 @@
 
   <script src="js/nav.js"></script>
   <script>
-    const API_BASE = window.location.hostname === 'localhost'
-      ? 'http://localhost:10000/api'
-      : 'https://silververse-b1hq.onrender.com/api';
+    const API_BASE = '/api';
 
     const params = new URLSearchParams(window.location.search);
     const txRef = params.get('tx_ref') || params.get('transaction_id') || params.get('flwref');
@@ -231,7 +229,7 @@
         iconEl.className = 'status-icon error';
         iconSvg.innerHTML = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
         titleEl.textContent = 'Payment Failed';
-        textEl.textContent = message || 'Your payment could not be processed. Please try again or contact support.';
+        textEl.textContent = message || 'Your payment could not be processed. Please try again or contact support at silververse.ng@gmail.com / 08132521005.';
         retryBtn.style.display = 'inline-flex';
       } else {
         iconEl.className = 'status-icon pending';

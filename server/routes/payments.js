@@ -3,7 +3,7 @@ const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
 const { getSQL, isDBEnabled, getMemRegistrations } = require('../db');
 
-const TICKET_PRICES = { Regular: 3000, VIP: 5000, VVIP: 10000 };
+const TICKET_PRICES = { Regular: 1000, VIP: 5000, VVIP: 10000 };
 const CALLBACK_URL = process.env.FLW_CALLBACK_URL || 'https://silververses.vercel.app/payment-success.html';
 const FLW_ENABLED = !!(process.env.FLW_PUBLIC_KEY && process.env.FLW_SECRET_KEY);
 
@@ -20,7 +20,7 @@ router.post('/initialize', requireAuth, async (req, res) => {
   }
   try {
     const { regId, email, firstName, lastName, phone, amount, ticketType } = req.body;
-    const price = amount || TICKET_PRICES[ticketType] || 3000;
+    const price = amount || TICKET_PRICES[ticketType] || 1000;
     const txRef = regId || `SV-${Date.now()}`;
 
     const response = await flw.Charges.mobile_money({
@@ -55,7 +55,7 @@ router.post('/inline', requireAuth, async (req, res) => {
   }
   try {
     const { regId, email, firstName, lastName, phone, amount, ticketType } = req.body;
-    const price = amount || TICKET_PRICES[ticketType] || 3000;
+    const price = amount || TICKET_PRICES[ticketType] || 1000;
     const txRef = regId || `SV-${Date.now()}`;
 
     if (isDBEnabled()) {
@@ -95,7 +95,7 @@ router.post('/card', requireAuth, async (req, res) => {
   }
   try {
     const { regId, email, firstName, lastName, phone, amount, ticketType, card_number, cvv, expiry_month, expiry_year } = req.body;
-    const price = amount || TICKET_PRICES[ticketType] || 3000;
+    const price = amount || TICKET_PRICES[ticketType] || 1000;
     const txRef = regId || `SV-${Date.now()}`;
 
     const response = await flw.Charges.card({

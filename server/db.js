@@ -49,7 +49,7 @@ async function initDB(sqlFn) {
       display_name VARCHAR(100),
       role VARCHAR(20) DEFAULT 'user',
       profile_image TEXT,
-      known_ip VARCHAR(50),
+      known_ip VARCHAR(500),
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW()
     )
@@ -94,6 +94,22 @@ async function initDB(sqlFn) {
     )
   `;
 
+  await sqlFn`
+    CREATE TABLE IF NOT EXISTS videos (
+      id SERIAL PRIMARY KEY,
+      event_id INTEGER REFERENCES events(id) ON DELETE SET NULL,
+      title VARCHAR(200) NOT NULL,
+      description TEXT,
+      video_type VARCHAR(20) NOT NULL,
+      video_url TEXT NOT NULL,
+      thumbnail_url TEXT,
+      category VARCHAR(100),
+      duration VARCHAR(20),
+      sort_order INTEGER DEFAULT 0,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `;
+
   console.log('✓ Database tables ready');
 }
 
@@ -117,12 +133,45 @@ async function seedEvent(sqlFn) {
       VALUES (
         'Voices & Visions Festival 2026',
         'A grand celebration of talent, culture, and creativity.',
-        '2026-08-15',
+        '2026-08-01',
         'Rochas Foundation, Ideato, Orlu, Imo State',
         'upcoming'
       )
     `;
     console.log('✓ Default event seeded');
+  }
+}
+
+async function seedTestUser(sqlFn) {
+  const existing = await sqlFn`SELECT id FROM users WHERE username = 'testuser'`;
+  if (existing.length === 0) {
+    const hash = bcrypt.hashSync('test123', 10);
+    await sqlFn`
+      INSERT INTO users (username, email, phone, password_hash, display_name, role)
+      VALUES ('testuser', 'test@silververse.com', '08000000000', ${hash}, 'Test User', 'user')
+    `;
+    console.log('✓ Test user seeded (testuser / test123)');
+  }
+}
+
+async function seedVideos(sqlFn) {
+  const existing = await sqlFn`SELECT id FROM videos LIMIT 1`;
+  if (existing.length === 0) {
+    const event = await sqlFn`SELECT id FROM events LIMIT 1`;
+    const eventId = event.length > 0 ? event[0].id : null;
+    const videos = [
+      { title: 'Nigerian Idol — Best Auditions 2025', desc: 'Watch the most incredible auditions from Nigerian Idol 2025. Raw talent, powerful voices, and unforgettable moments.', url: 'https://www.youtube.com/watch?v=VIDEO_ID_1', cat: 'Music', dur: '12:34', sort: 1 },
+      { title: "Africa's Got Talent — Incredible Performances", desc: 'Show-stopping performances from across Africa. Dance, music, and amazing acts that wowed the judges.', url: 'https://www.youtube.com/watch?v=VIDEO_ID_2', cat: 'Dance', dur: '8:21', sort: 2 },
+      { title: 'Nigeria Comedy Talent Hunt — Highlights', desc: 'The funniest comedians from Nigeria compete for the crown. Side-splitting comedy and hilarious stand-up routines.', url: 'https://www.youtube.com/watch?v=VIDEO_ID_3', cat: 'Comedy', dur: '15:07', sort: 3 },
+      { title: 'West Africa Drama Festival — Best Scenes', desc: 'Powerful dramatic performances from the best theatre groups across West Africa. Emotional and captivating storytelling.', url: 'https://www.youtube.com/watch?v=VIDEO_ID_4', cat: 'Drama', dur: '10:45', sort: 4 },
+    ];
+    for (const v of videos) {
+      await sqlFn`
+        INSERT INTO videos (event_id, title, description, video_type, video_url, category, duration, sort_order)
+        VALUES (${eventId}, ${v.title}, ${v.desc}, 'youtube', ${v.url}, ${v.cat}, ${v.dur}, ${v.sort})
+      `;
+    }
+    console.log('✓ 4 talent hunt videos seeded');
   }
 }
 
@@ -140,6 +189,8 @@ async function setupDB(sqlFn) {
     await initDB(sqlFn);
     await seedAdmin(sqlFn, process.env.ADMIN_PASSWORD || 'admin123');
     await seedEvent(sqlFn);
+    await seedTestUser(sqlFn);
+    await seedVideos(sqlFn);
   } catch (err) {
     console.error('⚠ Database unavailable, falling back to in-memory:', err.message);
     setDBEnabled(false);
