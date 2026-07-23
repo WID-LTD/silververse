@@ -745,4 +745,52 @@ router.put('/users/:id/password', requireAdmin, async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
 
+// ── POST /registrations — Admin create registration(s) with payment bypass ──
+router.post('/registrations', requireAdmin, async (req, res) => {
+  try {
+    const { registrations } = req.body;
+    if (!registrations || !Array.isArray(registrations) || registrations.length === 0) {
+      return res.status(400).json({ success: false, message: 'Array of registrations required' });
+    }
+
+    const regIds = [];
+    for (const reg of registrations) {
+      if (!reg.firstName || !reg.lastName || !reg.email || !reg.phone || !reg.category) {
+        return res.status(400).json({ success: false, message: 'Missing required fields in registration entry' });
+      }
+
+      const regId = 'VV26-' + String(Date.now() + Math.floor(Math.random() * 1000)).slice(-4);
+
+      if (isDBEnabled()) {
+        const sql = getSQL();
+        const evts = await sql`SELECT id FROM events LIMIT 1`;
+        const resolvedEventId = evts.length > 0 ? evts[0].id : null;
+
+        await sql`
+          INSERT INTO registrations (user_id, reg_id, event_id, first_name, last_name, email, phone, category, sub_category, ticket_type, amount_paid, payment_status, payment_tx_ref)
+          VALUES (${req.session.userId}, ${regId}, ${resolvedEventId}, ${reg.firstName}, ${reg.lastName}, ${reg.email.toLowerCase()}, ${reg.phone}, ${reg.category}, ${reg.subCategory || ''}, ${reg.ticketType || 'Regular'}, ${reg.amount || 0}, 'verified', 'admin-bypass')
+        `;
+      } else {
+        const regs = getMemRegistrations();
+        const events = getMemEvents();
+        const resolvedEventId = events.length > 0 ? events[0].id : null;
+        regs.push({
+          id: regs.length + 1, user_id: req.session.userId, reg_id: regId, event_id: resolvedEventId,
+          first_name: reg.firstName, last_name: reg.lastName, email: reg.email.toLowerCase(), phone: reg.phone,
+          category: reg.category, sub_category: reg.subCategory || '', ticket_type: reg.ticketType || 'Regular',
+          talent: '', talent_description: '', perf_time: '', profile_image: '', qr_code: '',
+          payment_status: 'verified', payment_tx_ref: 'admin-bypass', amount_paid: reg.amount || 0,
+          checked_in: false, checked_in_time: null, created_at: new Date().toISOString()
+        });
+      }
+      regIds.push(regId);
+    }
+
+    res.json({ success: true, regIds, count: regIds.length, message: `${regIds.length} registration(s) created` });
+  } catch (err) {
+    console.error('Admin create registration error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;

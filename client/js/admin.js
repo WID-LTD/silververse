@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     bindContactForm();
     bindAboutForm();
     bindAddBlog();
+    bindCreateRegistration();
     navigateTo(getHash() || 'dashboard');
     loadDashboard();
   } catch (err) {
@@ -175,7 +176,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     if (!tbody) return;
 
     if (regs.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--gray-400);">No registrations found.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--gray-400);">No registrations found.</td></tr>';
       return;
     }
 
@@ -188,8 +189,13 @@ document.addEventListener('DOMContentLoaded', async function () {
         : '<span class="badge badge-yellow">Not Checked</span>';
       var amount = r.amountPaid ? '\u20A6' + Number(r.amountPaid).toLocaleString() : '\u20A60';
 
+      var imgHtml = r.profileImage
+        ? '<a href="' + escapeAttr(r.profileImage) + '" download="' + escapeAttr(r.firstName + '_' + r.lastName) + '" title="Download image"><img src="' + escapeAttr(r.profileImage) + '" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:50%;border:2px solid var(--primary);"></a>'
+        : '<span style="color:var(--gray-400);font-size:0.75rem;">—</span>';
+
       return '<tr>' +
         '<td><strong>' + escapeHtml(r.regId || '') + '</strong></td>' +
+        '<td>' + imgHtml + '</td>' +
         '<td>' + escapeHtml((r.firstName || '') + ' ' + (r.lastName || '')) + '</td>' +
         '<td>' + escapeHtml(r.email || '') + '</td>' +
         '<td><span class="badge badge-blue">' + escapeHtml(r.category || 'Spectator') + '</span></td>' +
@@ -1197,5 +1203,85 @@ document.addEventListener('DOMContentLoaded', async function () {
           });
       });
     }
+  }
+
+  // ═══════════════════════════════════════
+  // CREATE REGISTRATION (Admin, bulk)
+  // ═══════════════════════════════════════
+  function bindCreateRegistration() {
+    var btn = document.getElementById('createRegBtn');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      openModal('Create Registration',
+        '<div class="form-row">' +
+          '<div class="form-group"><label>First Name *</label><input type="text" id="crFirstName" class="form-input" placeholder="First name"></div>' +
+          '<div class="form-group"><label>Last Name *</label><input type="text" id="crLastName" class="form-input" placeholder="Last name"></div>' +
+        '</div>' +
+        '<div class="form-row">' +
+          '<div class="form-group"><label>Email *</label><input type="email" id="crEmail" class="form-input" placeholder="email@example.com"></div>' +
+          '<div class="form-group"><label>Phone *</label><input type="tel" id="crPhone" class="form-input" placeholder="08012345678"></div>' +
+        '</div>' +
+        '<div class="form-row">' +
+          '<div class="form-group"><label>Category *</label><select id="crCategory" class="form-input">' +
+            '<option value="Spectator">Spectator</option>' +
+            '<option value="Contestant">Contestant</option>' +
+            '<option value="VIP">VIP Guest</option>' +
+            '<option value="VVIP">VVIP (Table for Four)</option>' +
+            '<option value="Volunteer">Volunteer</option>' +
+            '<option value="Speaker">Speaker</option>' +
+          '</select></div>' +
+          '<div class="form-group"><label>Ticket Type</label><select id="crTicketType" class="form-input">' +
+            '<option value="Regular">Regular</option>' +
+            '<option value="VIP">VIP</option>' +
+            '<option value="VVIP">VVIP</option>' +
+          '</select></div>' +
+        '</div>' +
+        '<div class="form-group"><label>Quantity (bulk)</label><input type="number" id="crQuantity" class="form-input" value="1" min="1" max="50"></div>',
+        'Create',
+        function () {
+          var firstName = document.getElementById('crFirstName').value.trim();
+          var lastName = document.getElementById('crLastName').value.trim();
+          var email = document.getElementById('crEmail').value.trim();
+          var phone = document.getElementById('crPhone').value.trim();
+          var category = document.getElementById('crCategory').value;
+          var ticketType = document.getElementById('crTicketType').value;
+          var quantity = parseInt(document.getElementById('crQuantity').value) || 1;
+
+          if (!firstName || !lastName || !email || !phone) {
+            showToast('Please fill in all required fields', 'error');
+            return;
+          }
+
+          var registrations = [];
+          for (var i = 0; i < quantity; i++) {
+            registrations.push({
+              firstName: i === 0 ? firstName : firstName + ' ' + (i + 1),
+              lastName: lastName,
+              email: i === 0 ? email : email.replace('@', '+' + (i + 1) + '@'),
+              phone: phone,
+              category: category,
+              ticketType: ticketType,
+              subCategory: ''
+            });
+          }
+
+          fetch('/api/admin/registrations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ registrations: registrations })
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+              if (res.success) {
+                showToast(res.message);
+                closeModal();
+                loadRegistrations();
+              } else {
+                showToast(res.message, 'error');
+              }
+            });
+        });
+    });
   }
 });

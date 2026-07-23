@@ -47,7 +47,7 @@ router.post('/', requireAuth, async (req, res) => {
     const {
       firstName, lastName, email, phone, category, subCategory,
       ticketType, talent, talentDescription, perfTime, eventId, amount,
-      paymentTxRef, paymentStatus
+      paymentTxRef, paymentStatus, profileImage
     } = req.body;
 
     if (!firstName || !lastName || !email || !phone || !category) {
@@ -69,8 +69,8 @@ router.post('/', requireAuth, async (req, res) => {
 
       const payStatus = paymentTxRef && paymentStatus ? paymentStatus : 'pending';
       await sql`
-        INSERT INTO registrations (user_id, reg_id, event_id, first_name, last_name, email, phone, category, sub_category, ticket_type, talent, talent_description, perf_time, amount_paid, payment_status, payment_tx_ref)
-        VALUES (${userId}, ${regId}, ${resolvedEventId}, ${firstName}, ${lastName}, ${email.toLowerCase()}, ${phone}, ${category}, ${subCategory || ''}, ${ticketType || 'Regular'}, ${talent || ''}, ${talentDescription || ''}, ${perfTime || ''}, ${amount || 0}, ${payStatus}, ${paymentTxRef || ''})
+        INSERT INTO registrations (user_id, reg_id, event_id, first_name, last_name, email, phone, category, sub_category, ticket_type, talent, talent_description, perf_time, amount_paid, payment_status, payment_tx_ref, profile_image)
+        VALUES (${userId}, ${regId}, ${resolvedEventId}, ${firstName}, ${lastName}, ${email.toLowerCase()}, ${phone}, ${category}, ${subCategory || ''}, ${ticketType || 'Regular'}, ${talent || ''}, ${talentDescription || ''}, ${perfTime || ''}, ${amount || 0}, ${payStatus}, ${paymentTxRef || ''}, ${profileImage || ''})
       `;
       res.json({ success: true, regId, message: `Registration successful! Your ID: ${regId}` });
     } else {
@@ -83,7 +83,7 @@ router.post('/', requireAuth, async (req, res) => {
         first_name: firstName, last_name: lastName, email: email.toLowerCase(), phone,
         category, sub_category: subCategory || '', ticket_type: ticketType || 'Regular',
         talent: talent || '', talent_description: talentDescription || '',
-        perf_time: perfTime || '', profile_image: '', qr_code: '',
+        perf_time: perfTime || '', profile_image: profileImage || '', qr_code: '',
         payment_status: (paymentTxRef && paymentStatus) ? paymentStatus : 'pending',
         payment_tx_ref: paymentTxRef || '', amount_paid: amount || 0,
         checked_in: false, checked_in_time: null,

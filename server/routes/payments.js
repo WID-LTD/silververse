@@ -10,7 +10,7 @@ const FLW_ENABLED = !!(process.env.FLW_PUBLIC_KEY && process.env.FLW_SECRET_KEY)
 let flw = null;
 if (FLW_ENABLED) {
   const Flutterwave = require('flutterwave-node-v3');
-  flw = new Flutterwave(process.env.FLW_PUBLIC_KEY, process.env.FLW_SECRET_KEY);
+  flw = new Flutterwave(process.env.FLW_PUBLIC_KEY, process.env.FLW_SECRET_KEY, process.env.FLW_ENCRYPTION_KEY || '');
 }
 
 // ── POST /initialize — Mobile money ──
@@ -136,7 +136,7 @@ router.get('/verify/:tx_ref', requireAuth, async (req, res) => {
     return res.status(503).json({ success: false, message: 'Payment not configured' });
   }
   try {
-    const response = await flw.Transaction.verify({ id: req.params.tx_ref });
+    const response = await flw.Transaction.verify({ tx_ref: req.params.tx_ref });
 
     if (response.status === 'success' && response.data.status === 'successful') {
       const txRef = response.data.tx_ref;
@@ -180,9 +180,9 @@ router.post('/webhook', async (req, res) => {
 
       if (isDBEnabled()) {
         const sql = getSQL();
-        await sql`UPDATE registrations SET payment_status = 'verified', amount_paid = ${amount} WHERE reg_id = ${txRef}`;
+        await sql`UPDATE registrations SET payment_status = 'verified', amount_paid = ${amount} WHERE reg_id = ${txRef} OR payment_tx_ref = ${txRef}`;
       } else {
-        const reg = getMemRegistrations().find(r => r.reg_id === txRef);
+        const reg = getMemRegistrations().find(r => r.reg_id === txRef || r.payment_tx_ref === txRef);
         if (reg) {
           reg.payment_status = 'verified';
           reg.amount_paid = amount;

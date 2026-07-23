@@ -85,6 +85,21 @@ document.addEventListener('DOMContentLoaded', function () {
             '<div class="card-overlay"><span class="cat-name">Dancing</span></div>' +
           '</label>' +
           '<label class="category-image-card">' +
+            '<input type="radio" name="subcategory" value="Spoken Word">' +
+            '<img src="assets/images/spoken-word.jpg" alt="Spoken word and poetry" width="400" height="250" loading="lazy">' +
+            '<div class="card-overlay"><span class="cat-name">Spoken Word / Poetry</span></div>' +
+          '</label>' +
+          '<label class="category-image-card">' +
+            '<input type="radio" name="subcategory" value="Modelling">' +
+            '<img src="assets/images/modelling.jpg" alt="Modelling and runway" width="400" height="250" loading="lazy">' +
+            '<div class="card-overlay"><span class="cat-name">Modelling</span></div>' +
+          '</label>' +
+          '<label class="category-image-card">' +
+            '<input type="radio" name="subcategory" value="Instrumental">' +
+            '<img src="assets/images/instrumental.jpg" alt="Instrumental performance" width="400" height="250" loading="lazy">' +
+            '<div class="card-overlay"><span class="cat-name">Instrumental Performance</span></div>' +
+          '</label>' +
+          '<label class="category-image-card">' +
             '<input type="radio" name="subcategory" value="Drama">' +
             '<img src="assets/images/stage.jpg" alt="Drama and acting" width="400" height="250" loading="lazy">' +
             '<div class="card-overlay"><span class="cat-name">Drama / Acting</span></div>' +
@@ -681,7 +696,8 @@ document.addEventListener('DOMContentLoaded', function () {
           talent: registrationData.talent || registrationData.subCategory || '',
           talentDescription: registrationData.talentDescription,
           perfTime: registrationData.perfTime,
-          amount: registrationData.amount
+          amount: registrationData.amount,
+          profileImage: registrationData.profileImage || ''
         })
       });
       var regData = await regRes.json();
@@ -733,7 +749,8 @@ document.addEventListener('DOMContentLoaded', function () {
           talent: registrationData.talent || registrationData.subCategory || '',
           talentDescription: registrationData.talentDescription,
           perfTime: registrationData.perfTime,
-          amount: registrationData.amount
+          amount: registrationData.amount,
+          profileImage: registrationData.profileImage || ''
         })
       });
       var regData = await regRes.json();
@@ -764,14 +781,20 @@ document.addEventListener('DOMContentLoaded', function () {
         var file = this.files[0];
         var preview = document.getElementById('profilePreview');
         if (preview && file.type.startsWith('image/')) {
-          var reader = new FileReader();
-          reader.onload = function (e) {
-            preview.innerHTML = '<img src="' + e.target.result + '" alt="Profile preview" style="width:120px;height:120px;object-fit:cover;border-radius:50%;border:3px solid var(--primary);">';
-            preview.style.display = 'block';
-          };
-          reader.readAsDataURL(file);
+          var formData = new FormData();
+          formData.append('image', file);
+          fetch('/api/upload/profile', { method: 'POST', body: formData, credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+              if (res.success && res.url) {
+                registrationData.profileImage = res.url;
+                preview.innerHTML = '<img src="' + res.url + '" alt="Profile preview" style="width:120px;height:120px;object-fit:cover;border-radius:50%;border:3px solid var(--primary);">';
+                preview.style.display = 'block';
+                upload.innerHTML = '<p>' + escapeHtml(file.name) + ' (' + (file.size / 1024).toFixed(1) + ' KB)</p>';
+              }
+            })
+            .catch(function () {});
         }
-        upload.innerHTML = '<p>' + escapeHtml(file.name) + ' (' + (file.size / 1024).toFixed(1) + ' KB)</p>';
       }
     });
   }
