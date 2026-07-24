@@ -218,13 +218,24 @@ img {
   left: 0;
   right: 0;
   height: var(--header-height);
-  background: rgba(0,0,0,0.15);
+  background: transparent;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   z-index: 1000;
   display: flex;
   align-items: center;
   transition: all 0.4s var(--ease-out-expo);
+}
+
+.navbar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), rgba(212,160,23,0.3), rgba(255,255,255,0.4), transparent);
+  opacity: 0.6;
 }
 
 .navbar-scrolled {

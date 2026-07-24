@@ -121,7 +121,7 @@ router.post('/login', async (req, res) => {
         // Add new IP to comma-separated list (max 5)
         const ips = user.known_ip.split(',').filter(Boolean);
         ips.push(req.clientIP);
-        const trimmed = ips.slice(-5).join(',');
+        const trimmed = ips.slice(-5).join(',').substring(0, 500);
         await sql`UPDATE users SET known_ip = ${trimmed}, updated_at = NOW() WHERE id = ${user.id}`;
       }
 

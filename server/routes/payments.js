@@ -2,193 +2,225 @@ const express = require('express');
 const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
 const { getSQL, isDBEnabled, getMemRegistrations } = require('../db');
+const axios = require('axios');
+const { Flutterwave, WebhookValidator } = require('flutterwave-node-v4');
 
 const TICKET_PRICES = { Regular: 1000, VIP: 5000, VVIP: 10000 };
 const CALLBACK_URL = process.env.FLW_CALLBACK_URL || 'https://silververses.vercel.app/payment-success.html';
-const FLW_ENABLED = !!(process.env.FLW_PUBLIC_KEY && process.env.FLW_SECRET_KEY);
+const FLW_ENABLED = !!(process.env.FLW_CLIENT_ID && process.env.FLW_CLIENT_SECRET);
+const FLW_BASE_URL = 'https://api.flutterwave.cloud/f4b/production';
 
 let flw = null;
+let accessToken = null;
+let tokenExpiry = 0;
+
 if (FLW_ENABLED) {
-  const Flutterwave = require('flutterwave-node-v3');
-  flw = new Flutterwave(process.env.FLW_PUBLIC_KEY, process.env.FLW_SECRET_KEY, process.env.FLW_ENCRYPTION_KEY || '');
+  flw = new Flutterwave({
+    clientId: process.env.FLW_CLIENT_ID,
+    clientSecret: process.env.FLW_CLIENT_SECRET,
+    encryptionKey: process.env.FLW_ENCRYPTION_KEY || '',
+    environment: process.env.FLW_ENVIRONMENT || 'live',
+  });
 }
 
-// ── POST /initialize — Mobile money ──
-router.post('/initialize', requireAuth, async (req, res) => {
-  if (!FLW_ENABLED || !flw) {
-    return res.status(503).json({ success: false, message: 'Payment not configured' });
+async function ensureToken() {
+  if (!flw) return null;
+  const now = Date.now();
+  if (!accessToken || now >= tokenExpiry) {
+    await flw.generateAccessToken();
+    accessToken = flw.getAccessToken();
+    tokenExpiry = now + 580000;
   }
-  try {
-    const { regId, email, firstName, lastName, phone, amount, ticketType } = req.body;
-    const price = amount || TICKET_PRICES[ticketType] || 1000;
-    const txRef = regId || `SV-${Date.now()}`;
+  return accessToken;
+}
 
-    const response = await flw.Charges.mobile_money({
-      phone_number: phone,
-      network: 'MTN',
-      amount: price,
-      currency: 'NGN',
-      email: email || 'festival@silververse.com',
-      tx_ref: txRef,
-      callback: CALLBACK_URL,
-    });
-
-    if (response.status === 'success') {
-      if (isDBEnabled()) {
-        const sql = getSQL();
-        await sql`UPDATE registrations SET payment_tx_ref = ${txRef}, amount_paid = ${price} WHERE reg_id = ${regId}`;
-      }
-      res.json({ success: true, data: response.data });
-    } else {
-      res.json({ success: false, message: response.message || 'Payment init failed' });
-    }
-  } catch (err) {
-    console.error('Payment init error:', err);
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-// ── POST /inline — Flutterwave inline checkout (client-side SDK) ──
-router.post('/inline', requireAuth, async (req, res) => {
+router.post('/init', requireAuth, async (req, res) => {
   if (!FLW_ENABLED) {
     return res.status(503).json({ success: false, message: 'Payment not configured' });
   }
   try {
-    const { regId, email, firstName, lastName, phone, amount, ticketType } = req.body;
+    const { regId, email, firstName, lastName, phone, amount, ticketType, paymentMethod } = req.body;
     const price = amount || TICKET_PRICES[ticketType] || 1000;
     const txRef = regId || `SV-${Date.now()}`;
+    const token = await ensureToken();
 
-    if (isDBEnabled()) {
-      const sql = getSQL();
-      await sql`UPDATE registrations SET payment_tx_ref = ${txRef}, amount_paid = ${price} WHERE reg_id = ${regId}`;
-    } else {
-      const reg = getMemRegistrations().find(r => r.reg_id === regId);
-      if (reg) {
-        reg.payment_tx_ref = txRef;
-        reg.amount_paid = price;
-      }
-    }
+    var phoneClean = phone ? phone.replace(/^0+/, '') : '8000000000';
 
-    res.json({
-      success: true,
-      data: {
-        txRef,
-        amount: price,
-        email: email || '',
-        name: `${firstName || ''} ${lastName || ''}`.trim(),
-        phone: phone || '',
-        publicKey: process.env.FLW_PUBLIC_KEY,
-        currency: 'NGN',
-        callback_url: CALLBACK_URL,
-      }
-    });
-  } catch (err) {
-    console.error('Inline payment init error:', err);
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-// ── POST /card — Card payment (server-side charges API) ──
-router.post('/card', requireAuth, async (req, res) => {
-  if (!FLW_ENABLED || !flw) {
-    return res.status(503).json({ success: false, message: 'Payment not configured' });
-  }
-  try {
-    const { regId, email, firstName, lastName, phone, amount, ticketType, card_number, cvv, expiry_month, expiry_year } = req.body;
-    const price = amount || TICKET_PRICES[ticketType] || 1000;
-    const txRef = regId || `SV-${Date.now()}`;
-
-    const response = await flw.Charges.card({
-      card_number, cvv, expiry_month, expiry_year,
+    var payload = {
       amount: price,
       currency: 'NGN',
-      email: email || 'festival@silververse.com',
-      phone_number: phone || '',
-      fullname: `${firstName || ''} ${lastName || ''}`.trim(),
-      tx_ref: txRef,
-      redirect_url: CALLBACK_URL,
-    });
+      reference: txRef,
+      redirect_url: CALLBACK_URL + '?tx_ref=' + encodeURIComponent(txRef),
+      customer: {
+        email: email || 'festival@silververse.com',
+        name: {
+          first: firstName || 'Festival',
+          last: lastName || 'Guest',
+        },
+        phone: {
+          country_code: '234',
+          number: phoneClean,
+        },
+      },
+      meta: {
+        reg_id: regId || '',
+        ticket_type: ticketType || 'Regular',
+      },
+    };
 
-    if (response.status === 'success' || response.data?.status === 'successful') {
+    if (paymentMethod === 'card') {
+      payload.payment_method = { type: 'card', card: {} };
+      payload.meta.requires_card = true;
+    } else {
+      payload.payment_method = { type: 'opay' };
+    }
+
+    var response = await axios.post(
+      FLW_BASE_URL + '/orchestration/direct-charges',
+      payload,
+      {
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json',
+          'X-Trace-Id': 'sv-' + txRef,
+        },
+        timeout: 30000,
+      }
+    );
+
+    var charge = response.data;
+    if (charge.status === 'success' && charge.data) {
+      var redirectUrl = '';
+      var nextAction = charge.data.next_action || {};
+      if (nextAction.type === 'redirect_url') {
+        redirectUrl = nextAction.redirect_url ? (nextAction.redirect_url.url || nextAction.redirect_url) : '';
+      }
+
       if (isDBEnabled()) {
-        const sql = getSQL();
-        await sql`UPDATE registrations SET payment_status = 'verified', payment_tx_ref = ${txRef}, amount_paid = ${price} WHERE reg_id = ${regId}`;
+        var sql = getSQL();
+        await sql`UPDATE registrations SET payment_tx_ref = ${txRef}, amount_paid = ${price} WHERE reg_id = ${regId}`;
       } else {
-        const reg = getMemRegistrations().find(r => r.reg_id === regId);
+        var reg = getMemRegistrations().find(function(r) { return r.reg_id === regId; });
         if (reg) {
-          reg.payment_status = 'verified';
           reg.payment_tx_ref = txRef;
           reg.amount_paid = price;
         }
       }
-    }
 
-    res.json({ success: true, data: response.data, message: response.message });
+      console.log('Payment init: ' + txRef + ' -> ' + (redirectUrl ? 'redirect' : 'instructions'));
+      res.json({
+        success: true,
+        data: {
+          txRef: txRef,
+          redirect_url: redirectUrl,
+          charge_id: charge.data.id,
+          next_action: nextAction,
+          amount: price,
+        }
+      });
+    } else {
+      res.json({ success: false, message: charge.message || 'Payment initiation failed' });
+    }
   } catch (err) {
-    console.error('Card payment error:', err);
-    res.status(500).json({ success: false, message: err.message });
+    console.error('Payment init error:', err.response ? err.response.data : err.message);
+    res.status(500).json({
+      success: false,
+      message: (err.response && err.response.data && err.response.data.message) || err.message
+    });
   }
 });
 
-// ── GET /verify/:tx_ref — Verify transaction ──
 router.get('/verify/:tx_ref', requireAuth, async (req, res) => {
-  if (!FLW_ENABLED || !flw) {
+  if (!FLW_ENABLED) {
     return res.status(503).json({ success: false, message: 'Payment not configured' });
   }
   try {
-    const response = await flw.Transaction.verify({ tx_ref: req.params.tx_ref });
+    var txRef = req.params.tx_ref;
+    var token = await ensureToken();
 
-    if (response.status === 'success' && response.data.status === 'successful') {
-      const txRef = response.data.tx_ref;
-      const amount = response.data.amount;
+    var response = await axios.get(
+      FLW_BASE_URL + '/charges?reference=' + encodeURIComponent(txRef),
+      {
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json',
+        },
+        timeout: 15000,
+      }
+    );
 
-      if (isDBEnabled()) {
-        const sql = getSQL();
-        await sql`UPDATE registrations SET payment_status = 'verified', amount_paid = ${amount} WHERE reg_id = ${txRef} OR payment_tx_ref = ${txRef}`;
-      } else {
-        const reg = getMemRegistrations().find(r => r.reg_id === txRef || r.payment_tx_ref === txRef);
-        if (reg) {
-          reg.payment_status = 'verified';
-          reg.amount_paid = amount;
+    var chargeData = response.data;
+    if (chargeData.status === 'success' && chargeData.data) {
+      var items = Array.isArray(chargeData.data) ? chargeData.data : [chargeData.data];
+      var charge = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].reference === txRef) {
+          charge = items[i];
+          break;
         }
       }
+      if (!charge) charge = items[0];
 
-      res.json({ success: true, data: response.data });
+      if (charge && charge.status === 'succeeded') {
+        if (isDBEnabled()) {
+          var sql = getSQL();
+          await sql`UPDATE registrations SET payment_status = 'verified', amount_paid = ${charge.amount} WHERE reg_id = ${txRef} OR payment_tx_ref = ${txRef}`;
+        } else {
+          var reg = getMemRegistrations().find(function(r) { return r.reg_id === txRef || r.payment_tx_ref === txRef; });
+          if (reg) {
+            reg.payment_status = 'verified';
+            reg.amount_paid = charge.amount;
+          }
+        }
+        console.log('Payment verified: ' + txRef);
+        res.json({ success: true, data: charge });
+      } else {
+        res.json({ success: false, message: 'Payment not yet successful', data: charge || null });
+      }
     } else {
-      res.json({ success: false, message: 'Payment not successful', data: response.data });
+      res.json({ success: false, message: 'Charge not found' });
     }
   } catch (err) {
-    console.error('Verify error:', err);
-    res.status(500).json({ success: false, message: err.message });
+    console.error('Verify error:', err.response ? err.response.data : err.message);
+    res.status(500).json({
+      success: false,
+      message: (err.response && err.response.data && err.response.data.message) || err.message
+    });
   }
 });
 
-// ── POST /webhook — Flutterwave webhook (public) ──
 router.post('/webhook', async (req, res) => {
   try {
-    const secretHash = process.env.FLW_WEBHOOK_SECRET;
-    const signature = req.headers['verif-hash'];
+    var secretHash = process.env.FLW_WEBHOOK_SECRET;
+    var signature = req.headers['verif-hash'];
+    var rawBody = JSON.stringify(req.body);
 
-    if (secretHash && signature !== secretHash) {
-      return res.status(401).json({ success: false, message: 'Invalid signature' });
+    if (secretHash && signature) {
+      var validator = new WebhookValidator(secretHash);
+      if (!validator.validate(rawBody, signature)) {
+        return res.status(401).json({ success: false, message: 'Invalid signature' });
+      }
     }
 
-    const payload = req.body;
-    if (payload.status === 'successful') {
-      const txRef = payload.tx_ref;
-      const amount = payload.amount || 0;
+    var payload = req.body;
+    var event = payload.event || '';
+    var data = payload.data || {};
+
+    if (event === 'charge.completed' && data.status === 'succeeded') {
+      var txRef = data.reference || '';
+      var amount = data.amount || 0;
 
       if (isDBEnabled()) {
-        const sql = getSQL();
+        var sql = getSQL();
         await sql`UPDATE registrations SET payment_status = 'verified', amount_paid = ${amount} WHERE reg_id = ${txRef} OR payment_tx_ref = ${txRef}`;
       } else {
-        const reg = getMemRegistrations().find(r => r.reg_id === txRef || r.payment_tx_ref === txRef);
+        var reg = getMemRegistrations().find(function(r) { return r.reg_id === txRef || r.payment_tx_ref === txRef; });
         if (reg) {
           reg.payment_status = 'verified';
           reg.amount_paid = amount;
         }
       }
-      console.log(`Payment verified via webhook: ${txRef}`);
+      console.log('Webhook: payment verified ' + txRef);
     }
 
     res.sendStatus(200);
@@ -198,11 +230,9 @@ router.post('/webhook', async (req, res) => {
   }
 });
 
-// ── GET /config — Public config ──
-router.get('/config', (req, res) => {
+router.get('/config', function(req, res) {
   res.json({
     success: true,
-    publicKey: process.env.FLW_PUBLIC_KEY || '',
     enabled: FLW_ENABLED,
     prices: TICKET_PRICES,
     currency: 'NGN',

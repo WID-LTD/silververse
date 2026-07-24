@@ -253,6 +253,13 @@
         .then(d => {
           if (d.success && d.data && d.data.status === 'successful') {
             showResult('success');
+            setTimeout(function () {
+              var regParams = new URLSearchParams();
+              regParams.set('cta', regId ? 'contestant' : 'user');
+              regParams.set('step', '4');
+              regParams.set('tx_ref', txRefParam);
+              window.location.href = 'register.html?' + regParams.toString();
+            }, 2500);
           } else if (d.data && (d.data.status === 'failed' || d.data.status === 'declined')) {
             showResult('failed');
           }
@@ -262,7 +269,13 @@
 
     if (status === 'successful' || status === 'success') {
       showResult('success');
-      if (txRef) verifyPayment(txRef);
+      if (txRef) {
+        verifyPayment(txRef);
+      } else {
+        setTimeout(function () {
+          window.location.href = 'register.html?cta=user&step=3';
+        }, 2500);
+      }
     } else if (status === 'failed' || status === 'declined') {
       showResult('failed');
     } else if (txRef || transactionId) {

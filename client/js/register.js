@@ -6,7 +6,23 @@ document.addEventListener('DOMContentLoaded', function () {
   'use strict';
 
   var params = new URLSearchParams(window.location.search);
-  var cta = params.get('cta'); // 'contestant' or 'user' or null
+  var cta = params.get('cta');
+
+  // Restore form state after payment redirect
+  var returnStep = params.get('step');
+  var returnTxRef = params.get('tx_ref');
+  var savedData = sessionStorage.getItem('svRegData');
+  if (returnStep === '4' && returnTxRef && savedData) {
+    try {
+      var restored = JSON.parse(savedData);
+      for (var k in restored) { if (restored.hasOwnProperty(k)) registrationData[k] = restored[k]; }
+      registrationData.paymentTxRef = returnTxRef;
+      registrationData.paymentVerified = true;
+      sessionStorage.removeItem('svRegData');
+      sessionStorage.removeItem('svRegStep');
+      sessionStorage.removeItem('svTxRef');
+    } catch (_e) {}
+  }
 
   // If no CTA, show selection cards
   if (!cta) {
@@ -45,6 +61,7 @@ document.addEventListener('DOMContentLoaded', function () {
     ticketType: 'Regular',
     amount: 1000
   };
+  var pendingProfileFile = null;
 
   // ── Auth Check ──
   async function checkAuth() {
@@ -328,6 +345,9 @@ document.addEventListener('DOMContentLoaded', function () {
     var step4 = document.getElementById('step4');
 
     if (isAuth) {
+      var payBadge = registrationData.paymentVerified
+        ? '<div class="payment-status-badge success"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Payment Verified</div>'
+        : '<div class="payment-status-badge pending"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Payment Pending</div>';
       step4.innerHTML = '' +
         '<h2>Confirm Registration</h2>' +
         '<p class="step-desc">Review and confirm your registration</p>' +
@@ -338,6 +358,7 @@ document.addEventListener('DOMContentLoaded', function () {
           '<div class="summary-row"><span class="label">Name</span><span class="value">' + escapeHtml(registrationData.firstName + ' ' + registrationData.lastName) + '</span></div>' +
           '<div class="summary-row"><span class="label">Email</span><span class="value">' + escapeHtml(registrationData.email) + '</span></div>' +
           '<div class="summary-total"><span class="label">Total</span><span class="amount">&#8358;' + (registrationData.amount || 1000).toLocaleString() + '</span></div>' +
+          payBadge +
         '</div>' +
         '<div class="form-group" style="margin-top:20px;">' +
           '<label class="checkbox-wrap" style="display:flex;align-items:center;gap:8px;cursor:pointer;">' +
@@ -355,6 +376,9 @@ document.addEventListener('DOMContentLoaded', function () {
     step4.innerHTML = '' +
       '<h2>Set Up Your Account</h2>' +
       '<p class="step-desc">Create your SilverVerse account</p>' +
+      (registrationData.paymentVerified
+        ? '<div class="payment-status-badge success" style="margin-bottom:20px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Payment Verified — Complete your account to get your ticket</div>'
+        : '') +
       '<div class="form-group">' +
         '<label for="username">What should we call you? *</label>' +
         '<input type="text" id="username" placeholder="Choose a username" required autocomplete="username">' +
@@ -561,87 +585,47 @@ document.addEventListener('DOMContentLoaded', function () {
     if (summaryAmount) summaryAmount.textContent = '\u20A6' + prices[type].toLocaleString();
   }
 
-  var flwPublicKey = '';
-
-  async function fetchPaymentConfig() {
-    try {
-      var res = await fetch('/api/payment/config', { credentials: 'same-origin' });
-      var data = await res.json();
-      if (data.success && data.enabled && data.publicKey) {
-        flwPublicKey = data.publicKey;
-      }
-    } catch (_e) {}
-  }
-
-  fetchPaymentConfig();
-
   window._initPayment = async function () {
     var prices = { Regular: 1000, VIP: 5000, VVIP: 10000 };
     var amount = prices[registrationData.ticketType] || 1000;
     var payBtn = document.getElementById('payBtn');
 
-    if (flwPublicKey && typeof FlutterwaveCheckout !== 'undefined') {
-      if (payBtn) {
-        payBtn.disabled = true;
-        payBtn.textContent = 'Launching payment...';
-      }
-      try {
-        FlutterwaveCheckout({
-          public_key: flwPublicKey,
-          tx_ref: 'SVV26-' + Date.now(),
+    if (payBtn) {
+      payBtn.disabled = true;
+      payBtn.textContent = 'Redirecting to payment...';
+    }
+
+    try {
+      sessionStorage.setItem('svRegData', JSON.stringify(registrationData));
+      sessionStorage.setItem('svRegStep', '2');
+
+      var res = await fetch('/api/payment/init', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          regId: '',
+          email: registrationData.email || '',
+          firstName: registrationData.firstName || '',
+          lastName: registrationData.lastName || '',
+          phone: registrationData.phone || '',
           amount: amount,
-          currency: 'NGN',
-          country: 'NG',
-          payment_options: 'card,mobilemoney,ussd,banktransfer',
-          customer: {
-            email: registrationData.email || '',
-            phone_number: registrationData.phone || '',
-            name: (registrationData.firstName || '') + ' ' + (registrationData.lastName || '')
-          },
-          customizations: {
-            title: 'Voices & Visions Festival 2026',
-            description: registrationData.ticketType + ' Ticket',
-            logo: ''
-          },
-          callback: async function (response) {
-            try {
-              var verifyRes = await fetch('/api/payment/verify/' + encodeURIComponent(response.tx_ref), { credentials: 'same-origin' });
-              var verifyData = await verifyRes.json();
-              if (verifyData.success && verifyData.data && verifyData.data.status === 'successful') {
-                registrationData.paymentTxRef = response.tx_ref;
-                registrationData.paymentVerified = true;
-                showToast('Payment confirmed!', 'success');
-                window._goToStep(4);
-              } else {
-                showToast('Payment verification failed. Please contact support.', 'error');
-                if (payBtn) { payBtn.disabled = false; payBtn.innerHTML = 'Pay &#8358;' + amount.toLocaleString() + ' &rarr;'; }
-              }
-            } catch (_e) {
-              showToast('Payment verification error. Please contact support.', 'error');
-              if (payBtn) { payBtn.disabled = false; payBtn.innerHTML = 'Pay &#8358;' + amount.toLocaleString() + ' &rarr;'; }
-            }
-          },
-          onclose: function () {
-            if (payBtn) {
-              payBtn.disabled = false;
-              payBtn.innerHTML = 'Pay &#8358;' + amount.toLocaleString() + ' &rarr;';
-            }
-            showToast('Payment cancelled.', 'warning');
-          }
-        });
-      } catch (_e) {
-        showToast('Payment error. Please try again.', 'error');
-        if (payBtn) {
-          payBtn.disabled = false;
-          payBtn.innerHTML = 'Pay &#8358;' + amount.toLocaleString() + ' &rarr;';
-        }
+          ticketType: registrationData.ticketType || 'Regular',
+          paymentMethod: 'opay'
+        })
+      });
+      var data = await res.json();
+
+      if (data.success && data.data && data.data.redirect_url) {
+        sessionStorage.setItem('svTxRef', data.data.txRef);
+        window.location.href = data.data.redirect_url;
+      } else {
+        showToast('Payment initiation failed. Please try again.', 'error');
+        if (payBtn) { payBtn.disabled = false; payBtn.innerHTML = 'Pay &#8358;' + amount.toLocaleString() + ' &rarr;'; }
       }
-    } else {
-      showToast('Payment gateway not configured. Contact support.', 'error');
-      if (payBtn) {
-        payBtn.disabled = true;
-        payBtn.textContent = 'Payment Unavailable';
-      }
+    } catch (_e) {
+      showToast('Payment error. Please try again.', 'error');
+      if (payBtn) { payBtn.disabled = false; payBtn.innerHTML = 'Pay &#8358;' + amount.toLocaleString() + ' &rarr;'; }
     }
   };
 
@@ -680,7 +664,21 @@ document.addEventListener('DOMContentLoaded', function () {
       var signupData = await signupRes.json();
       if (!signupData.success) throw new Error(signupData.message || 'Signup failed');
 
+      // Upload profile image now that we're authenticated
+      if (pendingProfileFile) {
+        try {
+          var fd = new FormData();
+          fd.append('image', pendingProfileFile);
+          var upRes = await fetch('/api/upload/profile', { method: 'POST', body: fd, credentials: 'same-origin' });
+          var upData = await upRes.json();
+          if (upData.success && upData.url) {
+            registrationData.profileImage = upData.url;
+          }
+        } catch (_e) {}
+      }
+
       // 2. Create registration
+      var txRef = registrationData.paymentTxRef || sessionStorage.getItem('svTxRef') || '';
       var regRes = await fetch('/api/registrations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -697,7 +695,9 @@ document.addEventListener('DOMContentLoaded', function () {
           talentDescription: registrationData.talentDescription,
           perfTime: registrationData.perfTime,
           amount: registrationData.amount,
-          profileImage: registrationData.profileImage || ''
+          profileImage: registrationData.profileImage || '',
+          paymentTxRef: txRef,
+          paymentStatus: txRef ? 'verified' : 'pending'
         })
       });
       var regData = await regRes.json();
@@ -734,6 +734,19 @@ document.addEventListener('DOMContentLoaded', function () {
     var btn = document.getElementById('createAccountBtn');
     if (btn) { btn.disabled = true; btn.innerHTML = '<span class="btn-text">Submitting...</span>'; }
     try {
+      // Upload profile image if pending
+      if (pendingProfileFile) {
+        try {
+          var fd = new FormData();
+          fd.append('image', pendingProfileFile);
+          var upRes = await fetch('/api/upload/profile', { method: 'POST', body: fd, credentials: 'same-origin' });
+          var upData = await upRes.json();
+          if (upData.success && upData.url) {
+            registrationData.profileImage = upData.url;
+          }
+        } catch (_e) {}
+      }
+      var txRef2 = registrationData.paymentTxRef || sessionStorage.getItem('svTxRef') || '';
       var regRes = await fetch('/api/registrations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -750,7 +763,9 @@ document.addEventListener('DOMContentLoaded', function () {
           talentDescription: registrationData.talentDescription,
           perfTime: registrationData.perfTime,
           amount: registrationData.amount,
-          profileImage: registrationData.profileImage || ''
+          profileImage: registrationData.profileImage || '',
+          paymentTxRef: txRef2,
+          paymentStatus: txRef2 ? 'verified' : 'pending'
         })
       });
       var regData = await regRes.json();
@@ -781,19 +796,15 @@ document.addEventListener('DOMContentLoaded', function () {
         var file = this.files[0];
         var preview = document.getElementById('profilePreview');
         if (preview && file.type.startsWith('image/')) {
-          var formData = new FormData();
-          formData.append('image', file);
-          fetch('/api/upload/profile', { method: 'POST', body: formData, credentials: 'same-origin' })
-            .then(function (r) { return r.json(); })
-            .then(function (res) {
-              if (res.success && res.url) {
-                registrationData.profileImage = res.url;
-                preview.innerHTML = '<img src="' + res.url + '" alt="Profile preview" style="width:120px;height:120px;object-fit:cover;border-radius:50%;border:3px solid var(--primary);">';
-                preview.style.display = 'block';
-                upload.innerHTML = '<p>' + escapeHtml(file.name) + ' (' + (file.size / 1024).toFixed(1) + ' KB)</p>';
-              }
-            })
-            .catch(function () {});
+          pendingProfileFile = file;
+          var reader = new FileReader();
+          reader.onload = function (e) {
+            registrationData.profileImage = e.target.result;
+            preview.innerHTML = '<img src="' + e.target.result + '" alt="Profile preview" style="width:120px;height:120px;object-fit:cover;border-radius:50%;border:3px solid var(--primary);">';
+            preview.style.display = 'block';
+            upload.innerHTML = '<p>' + escapeHtml(file.name) + ' (' + (file.size / 1024).toFixed(1) + ' KB)</p>';
+          };
+          reader.readAsDataURL(file);
         }
       }
     });
@@ -818,5 +829,22 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // ── Initialize ──
-  checkAuth().then(function () { renderStep1(); });
+  checkAuth().then(function () {
+    if (registrationData.paymentVerified) {
+      // Skip directly to step 4 (payment confirmed, just confirm/submit)
+      currentStep = 4;
+      document.querySelectorAll('.step-item').forEach(function (item) {
+        var s = parseInt(item.dataset.step, 10);
+        item.classList.remove('active', 'done');
+        if (s === 4) item.classList.add('active');
+        else if (s < 4) item.classList.add('done');
+      });
+      document.querySelectorAll('.form-step').forEach(function (s) { s.classList.remove('active'); });
+      var target = document.getElementById('step4');
+      if (target) target.classList.add('active');
+      renderStep4();
+    } else {
+      renderStep1();
+    }
+  });
 });

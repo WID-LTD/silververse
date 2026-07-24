@@ -167,8 +167,11 @@
   function closeModal() {
     var modal = document.getElementById('videoModal');
     modal.classList.remove('open');
-    modal.querySelector('.player-container').innerHTML = '';
     document.body.style.overflow = '';
+    var container = modal.querySelector('.player-container');
+    var vid = container.querySelector('video');
+    if (vid) { vid.pause(); vid.removeAttribute('src'); vid.load(); }
+    container.innerHTML = '';
   }
 
   /* ── States ── */

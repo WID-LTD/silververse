@@ -58,8 +58,7 @@
       }
     } catch (_err) {
       authContainer.innerHTML =
-        '<a href="login.html" class="nav-login-link">Login</a>' +
-        '<a href="register.html" class="nav-register-link">Register</a>';
+        '<a href="login.html" class="nav-login-link">Login</a>';
     }
   }
 

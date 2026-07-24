@@ -523,6 +523,31 @@
   position: relative;
 }
 
+.payment-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-top: 12px;
+}
+
+.payment-status-badge.success {
+  background: #d1fae5;
+  color: var(--success);
+}
+
+.payment-status-badge.pending {
+  background: #fef3c7;
+  color: var(--warning);
+}
+
+.payment-status-badge svg {
+  flex-shrink: 0;
+}
+
 /* ─── Form Actions ─── */
 .form-actions {
   display: flex;
