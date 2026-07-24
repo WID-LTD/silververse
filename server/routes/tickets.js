@@ -247,7 +247,7 @@ router.post('/bulk-print', requireAuth, async (req, res) => {
           '</div>' +
           '<div class="ct-tear"><div class="ct-tear-dot ct-tear-top"></div><div class="ct-tear-line"></div><div class="ct-tear-dot ct-tear-bottom"></div></div>' +
           '<div class="ct-right">' +
-            (qrDataUrl ? '<div class="ct-qr"><img src="' + qrDataUrl + '" alt="QR" width="70" height="70"></div>' : '') +
+            (qrDataUrl ? '<div class="ct-qr"><img src="' + qrDataUrl + '" alt="QR" width="60" height="60"></div>' : '') +
             '<div class="ct-qr-label">SCAN AT GATE</div>' +
             '<div class="ct-right-id">' + esc(reg.regId || '') + '</div>' +
             '<div class="ct-right-status ' + statusClass + '">' + statusLabel + '</div>' +
@@ -264,32 +264,32 @@ router.post('/bulk-print', requireAuth, async (req, res) => {
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SilverVerse Tickets</title>';
     html += '<style>';
     html += '*{margin:0;padding:0;box-sizing:border-box;}';
-    html += '@page{size:A4 portrait;margin:8mm;}';
+    html += '@page{size:A4 landscape;margin:5mm;}';
     html += '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}';
     html += 'body{font-family:Arial,Helvetica,sans-serif;background:#eee;}';
-    html += '.page{width:190mm;min-height:277mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6mm;padding:0;page-break-after:always;}';
+    html += '.page{width:287mm;min-height:200mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4mm;padding:0;page-break-after:always;}';
     html += '.page:last-child{page-break-after:auto;}';
-    html += '.ticket-cell{display:flex;}';
-    html += '.compact-ticket{display:flex;width:100%;border-radius:6px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,0.12);background:#fff;}';
-    html += '.ct-left{flex:0 0 65%;background:linear-gradient(135deg,#1e3a5f 0%,#0f1f3a 50%,#0a1628 100%);color:#fff;padding:10px 12px;display:flex;flex-direction:column;gap:3px;position:relative;overflow:hidden;font-size:8px;}';
+    html += '.ticket-cell{display:flex;align-items:center;justify-content:center;overflow:hidden;}';
+    html += '.compact-ticket{transform:rotate(90deg);width:130mm;height:94mm;transform-origin:center center;display:flex;border-radius:5px;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,0.12);background:#fff;}';
+    html += '.ct-left{flex:0 0 65%;background:linear-gradient(135deg,#1e3a5f 0%,#0f1f3a 50%,#0a1628 100%);color:#fff;padding:8px 10px;display:flex;flex-direction:column;gap:2px;position:relative;overflow:hidden;font-size:10px;}';
     html += '.ct-left::before{content:"";position:absolute;top:-30px;right:-30px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,rgba(212,175,55,0.1) 0%,transparent 70%);pointer-events:none;}';
-    html += '.ct-logo{font-size:9px;font-weight:800;letter-spacing:2px;color:#d4af37;}';
-    html += '.ct-pass-type{font-size:6px;font-weight:700;letter-spacing:1px;color:rgba(212,175,55,0.8);margin-bottom:2px;}';
-    html += '.ct-event-name{font-size:9px;font-weight:700;margin-bottom:4px;line-height:1.2;}';
-    html += '.ct-field{display:flex;gap:3px;line-height:1.3;}';
-    html += '.ct-label{color:rgba(255,255,255,0.55);white-space:nowrap;min-width:36px;}';
-    html += '.ct-val{color:#fff;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}';
+    html += '.ct-logo{font-size:12px;font-weight:800;letter-spacing:2px;color:#d4af37;}';
+    html += '.ct-pass-type{font-size:8px;font-weight:700;letter-spacing:1px;color:rgba(212,175,55,0.8);margin-bottom:1px;}';
+    html += '.ct-event-name{font-size:11px;font-weight:700;margin-bottom:3px;line-height:1.2;}';
+    html += '.ct-field{display:flex;gap:3px;line-height:1.4;}';
+    html += '.ct-label{color:rgba(255,255,255,0.55);white-space:nowrap;min-width:40px;font-size:9px;}';
+    html += '.ct-val{color:#fff;font-weight:600;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}';
     html += '.ct-tear{flex:0 0 8px;background:#f0f0f0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:2px 0;}';
     html += '.ct-tear-dot{width:6px;height:6px;border-radius:50%;background:#fff;border:1px solid #ddd;}';
     html += '.ct-tear-line{flex:1;width:1px;background:linear-gradient(to bottom,transparent 0%,#ccc 30%,#ccc 70%,transparent 100%);}';
-    html += '.ct-right{flex:0 0 27%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;gap:2px;}';
+    html += '.ct-right{flex:0 0 27%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 4px;gap:1px;}';
     html += '.ct-qr img{display:block;}';
-    html += '.ct-qr-label{font-size:5px;font-weight:700;letter-spacing:1px;color:#1e3a5f;}';
-    html += '.ct-right-id{font-size:7px;font-weight:700;color:#333;text-align:center;word-break:break-all;}';
-    html += '.ct-right-status{font-size:6px;font-weight:700;padding:2px 8px;border-radius:3px;}';
+    html += '.ct-qr-label{font-size:6px;font-weight:700;letter-spacing:1px;color:#1e3a5f;}';
+    html += '.ct-right-id{font-size:8px;font-weight:700;color:#333;text-align:center;word-break:break-all;}';
+    html += '.ct-right-status{font-size:7px;font-weight:700;padding:2px 8px;border-radius:3px;}';
     html += '.status-approved{background:#059669;color:#fff;}';
     html += '.status-pending{background:#f59e0b;color:#fff;}';
-    html += '</style></head><body>';
+    html += '<\/style></head><body>';
     html += '<div id="printArea">';
 
     for (var p = 0; p < pageGroups.length; p++) {
