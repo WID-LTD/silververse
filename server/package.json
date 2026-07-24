@@ -15,8 +15,6 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
-    "flutterwave-node-v3": "^1.4.1",
-    "flutterwave-node-v4": "^0.2.1",
     "multer": "^2.2.0",
     "pdfkit": "^0.19.1",
     "pg": "^8.22.0",

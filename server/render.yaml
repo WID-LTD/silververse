@@ -39,11 +39,11 @@ services:
       - key: R2_SECRET_ACCESS_KEY
         sync: false
       - key: R2_BUCKET
-        value: silververse-uploads
+        value: silververse
       - key: R2_PUBLIC_URL
         sync: false
 
-      # ── Flutterwave ──
+      # ── Flutterwave v3 ──
       - key: FLW_PUBLIC_KEY
         sync: false
       - key: FLW_SECRET_KEY

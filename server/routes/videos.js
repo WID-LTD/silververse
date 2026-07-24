@@ -17,7 +17,7 @@ const r2Client = R2_ENABLED ? new S3Client({
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
   },
 }) : null;
-const R2_BUCKET = process.env.R2_BUCKET || 'silververse-uploads';
+const R2_BUCKET = process.env.R2_BUCKET || 'silververse';
 const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || '';
 
 const videoUpload = multer({

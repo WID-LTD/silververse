@@ -1,101 +1,64 @@
 const express = require('express');
 const router = express.Router();
-const { requireAuth } = require('../middleware/auth');
+const crypto = require('crypto');
 const { getSQL, isDBEnabled, getMemRegistrations } = require('../db');
 const axios = require('axios');
-const { Flutterwave, WebhookValidator } = require('flutterwave-node-v4');
 
 const TICKET_PRICES = { Regular: 1000, VIP: 5000, VVIP: 10000 };
 const CALLBACK_URL = process.env.FLW_CALLBACK_URL || 'https://silververses.vercel.app/payment-success.html';
-const FLW_ENABLED = !!(process.env.FLW_CLIENT_ID && process.env.FLW_CLIENT_SECRET);
-const FLW_BASE_URL = 'https://api.flutterwave.cloud/f4b/production';
+const FLW_SECRET_KEY = process.env.FLW_SECRET_KEY || '';
+const FLW_PUBLIC_KEY = process.env.FLW_PUBLIC_KEY || '';
+const FLW_ENABLED = !!(FLW_PUBLIC_KEY && FLW_SECRET_KEY);
+const FLW_BASE_URL = 'https://api.flutterwave.com/v3';
 
-let flw = null;
-let accessToken = null;
-let tokenExpiry = 0;
-
-if (FLW_ENABLED) {
-  flw = new Flutterwave({
-    clientId: process.env.FLW_CLIENT_ID,
-    clientSecret: process.env.FLW_CLIENT_SECRET,
-    encryptionKey: process.env.FLW_ENCRYPTION_KEY || '',
-    environment: process.env.FLW_ENVIRONMENT || 'live',
-  });
-}
-
-async function ensureToken() {
-  if (!flw) return null;
-  const now = Date.now();
-  if (!accessToken || now >= tokenExpiry) {
-    await flw.generateAccessToken();
-    accessToken = flw.getAccessToken();
-    tokenExpiry = now + 580000;
-  }
-  return accessToken;
-}
-
+// ── Initiate payment ──
 router.post('/init', async (req, res) => {
   if (!FLW_ENABLED) {
-    return res.status(503).json({ success: false, message: 'Payment not configured' });
+    return res.status(503).json({ success: false, message: 'Payment system is offline. Please contact support.' });
   }
   try {
     const { regId, email, firstName, lastName, phone, amount, ticketType, paymentMethod } = req.body;
     const price = amount || TICKET_PRICES[ticketType] || 1000;
     const txRef = regId || `SV-${Date.now()}`;
-    const token = await ensureToken();
 
     var phoneClean = phone ? phone.replace(/^0+/, '') : '8000000000';
+    var paymentOptions = paymentMethod === 'card' ? 'card' : 'card,opay,ussd';
 
     var payload = {
+      tx_ref: txRef,
       amount: price,
       currency: 'NGN',
-      reference: txRef,
       redirect_url: CALLBACK_URL + '?tx_ref=' + encodeURIComponent(txRef),
       customer: {
         email: email || 'festival@silververse.com',
-        name: {
-          first: firstName || 'Festival',
-          last: lastName || 'Guest',
-        },
-        phone: {
-          country_code: '234',
-          number: phoneClean,
-        },
+        name: (firstName || 'Festival') + ' ' + (lastName || 'Guest'),
+        phonenumber: '234' + phoneClean,
       },
       meta: {
         reg_id: regId || '',
         ticket_type: ticketType || 'Regular',
       },
+      customizations: {
+        title: 'SilverVerse Ticket',
+        description: 'Ticket purchase - ' + (ticketType || 'Regular'),
+      },
+      payment_options: paymentOptions,
     };
 
-    if (paymentMethod === 'card') {
-      payload.payment_method = { type: 'card', card: {} };
-      payload.meta.requires_card = true;
-    } else {
-      payload.payment_method = { type: 'opay' };
-    }
-
     var response = await axios.post(
-      FLW_BASE_URL + '/orchestration/direct-charges',
+      FLW_BASE_URL + '/payments',
       payload,
       {
         headers: {
-          'Authorization': 'Bearer ' + token,
+          'Authorization': 'Bearer ' + FLW_SECRET_KEY,
           'Content-Type': 'application/json',
-          'X-Trace-Id': 'sv-' + txRef,
         },
         timeout: 30000,
       }
     );
 
     var charge = response.data;
-    if (charge.status === 'success' && charge.data) {
-      var redirectUrl = '';
-      var nextAction = charge.data.next_action || {};
-      if (nextAction.type === 'redirect_url') {
-        redirectUrl = nextAction.redirect_url ? (nextAction.redirect_url.url || nextAction.redirect_url) : '';
-      }
-
+    if (charge.status === 'success' && charge.data && charge.data.link) {
       if (isDBEnabled()) {
         var sql = getSQL();
         await sql`UPDATE registrations SET payment_tx_ref = ${txRef}, amount_paid = ${price} WHERE reg_id = ${regId}`;
@@ -107,14 +70,12 @@ router.post('/init', async (req, res) => {
         }
       }
 
-      console.log('Payment init: ' + txRef + ' -> ' + (redirectUrl ? 'redirect' : 'instructions'));
+      console.log('Payment init: ' + txRef + ' -> ' + charge.data.link);
       res.json({
         success: true,
         data: {
           txRef: txRef,
-          redirect_url: redirectUrl,
-          charge_id: charge.data.id,
-          next_action: nextAction,
+          redirect_url: charge.data.link,
           amount: price,
         }
       });
@@ -122,7 +83,7 @@ router.post('/init', async (req, res) => {
       res.json({ success: false, message: charge.message || 'Payment initiation failed' });
     }
   } catch (err) {
-    console.error('Payment init error:', err.response ? err.response.data : err.message);
+    console.error('Payment init error:', err.response ? JSON.stringify(err.response.data) : err.message);
     res.status(500).json({
       success: false,
       message: (err.response && err.response.data && err.response.data.message) || err.message
@@ -130,55 +91,45 @@ router.post('/init', async (req, res) => {
   }
 });
 
+// ── Verify payment ──
 router.get('/verify/:tx_ref', async (req, res) => {
   if (!FLW_ENABLED) {
     return res.status(503).json({ success: false, message: 'Payment not configured' });
   }
   try {
     var txRef = req.params.tx_ref;
-    var token = await ensureToken();
-
     var response = await axios.get(
-      FLW_BASE_URL + '/charges?reference=' + encodeURIComponent(txRef),
+      FLW_BASE_URL + '/transactions/' + encodeURIComponent(txRef) + '/verify',
       {
         headers: {
-          'Authorization': 'Bearer ' + token,
+          'Authorization': 'Bearer ' + FLW_SECRET_KEY,
           'Content-Type': 'application/json',
         },
         timeout: 15000,
       }
     );
 
-    var chargeData = response.data;
-    if (chargeData.status === 'success' && chargeData.data) {
-      var items = Array.isArray(chargeData.data) ? chargeData.data : [chargeData.data];
-      var charge = null;
-      for (var i = 0; i < items.length; i++) {
-        if (items[i].reference === txRef) {
-          charge = items[i];
-          break;
-        }
-      }
-      if (!charge) charge = items[0];
-
-      if (charge && charge.status === 'succeeded') {
+    var result = response.data;
+    if (result.status === 'success' && result.data) {
+      var trx = result.data;
+      if (trx.status === 'successful') {
         if (isDBEnabled()) {
           var sql = getSQL();
-          await sql`UPDATE registrations SET payment_status = 'verified', amount_paid = ${charge.amount} WHERE reg_id = ${txRef} OR payment_tx_ref = ${txRef}`;
+          await sql`UPDATE registrations SET payment_status = 'verified', amount_paid = ${trx.amount} WHERE reg_id = ${txRef} OR payment_tx_ref = ${txRef}`;
         } else {
           var reg = getMemRegistrations().find(function(r) { return r.reg_id === txRef || r.payment_tx_ref === txRef; });
           if (reg) {
             reg.payment_status = 'verified';
-            reg.amount_paid = charge.amount;
+            reg.amount_paid = trx.amount;
           }
         }
         console.log('Payment verified: ' + txRef);
-        res.json({ success: true, data: charge });
+        res.json({ success: true, data: trx });
       } else {
-        res.json({ success: false, message: 'Payment not yet successful', data: charge || null });
+        res.json({ success: false, message: 'Payment not yet successful', status: trx.status });
       }
     } else {
-      res.json({ success: false, message: 'Charge not found' });
+      res.json({ success: false, message: 'Transaction not found' });
     }
   } catch (err) {
     console.error('Verify error:', err.response ? err.response.data : err.message);
@@ -189,6 +140,7 @@ router.get('/verify/:tx_ref', async (req, res) => {
   }
 });
 
+// ── Webhook ──
 router.post('/webhook', async (req, res) => {
   try {
     var secretHash = process.env.FLW_WEBHOOK_SECRET;
@@ -196,8 +148,8 @@ router.post('/webhook', async (req, res) => {
     var rawBody = JSON.stringify(req.body);
 
     if (secretHash && signature) {
-      var validator = new WebhookValidator(secretHash);
-      if (!validator.validate(rawBody, signature)) {
+      var computed = crypto.createHmac('sha256', secretHash).update(rawBody).digest('hex');
+      if (computed !== signature) {
         return res.status(401).json({ success: false, message: 'Invalid signature' });
       }
     }
@@ -206,8 +158,8 @@ router.post('/webhook', async (req, res) => {
     var event = payload.event || '';
     var data = payload.data || {};
 
-    if (event === 'charge.completed' && data.status === 'succeeded') {
-      var txRef = data.reference || '';
+    if (event === 'charge.completed' && data.status === 'successful') {
+      var txRef = data.tx_ref || data.reference || '';
       var amount = data.amount || 0;
 
       if (isDBEnabled()) {
@@ -230,6 +182,7 @@ router.post('/webhook', async (req, res) => {
   }
 });
 
+// ── Config ──
 router.get('/config', function(req, res) {
   res.json({
     success: true,
