@@ -138,6 +138,8 @@ async function initDB(sqlFn) {
 
   await sqlFn`ALTER TABLE events ADD COLUMN IF NOT EXISTS is_trending BOOLEAN DEFAULT false`;
   await sqlFn`ALTER TABLE events ADD COLUMN IF NOT EXISTS event_time TIME DEFAULT '09:00:00'`;
+  await sqlFn`ALTER TABLE events ADD COLUMN IF NOT EXISTS is_main BOOLEAN DEFAULT false`;
+  try { await sqlFn`CREATE UNIQUE INDEX IF NOT EXISTS idx_events_single_main ON events ((true::boolean)) WHERE is_main = true`; } catch(_) {}
 
   await sqlFn`
     CREATE TABLE IF NOT EXISTS blog_posts (
@@ -227,13 +229,14 @@ async function seedEvent(sqlFn) {
   const existing = await sqlFn`SELECT id FROM events LIMIT 1`;
   if (existing.length === 0) {
     await sqlFn`
-      INSERT INTO events (name, description, event_date, venue, status)
+      INSERT INTO events (name, description, event_date, venue, status, is_main)
       VALUES (
         'Voices & Visions Festival 2026',
         'A grand celebration of talent, culture, and creativity.',
         '2026-08-01',
         'Rochas Foundation, Ideato, Orlu, Imo State',
-        'upcoming'
+        'upcoming',
+        true
       )
     `;
     console.log('✓ Default event seeded');
@@ -415,7 +418,7 @@ function seedInMemory() {
   }
 
   if (memEvents.length === 0) {
-    memEvents.push({ id: 1, name: 'Voices & Visions Festival 2026', description: 'A grand celebration of talent, culture, and creativity.', event_date: '2026-08-01', event_time: '09:00:00', venue: 'Rochas Foundation, Ideato, Orlu, Imo State', status: 'upcoming', is_trending: true, created_at: new Date().toISOString() });
+    memEvents.push({ id: 1, name: 'Voices & Visions Festival 2026', description: 'A grand celebration of talent, culture, and creativity.', event_date: '2026-08-01', event_time: '09:00:00', venue: 'Rochas Foundation, Ideato, Orlu, Imo State', status: 'upcoming', is_trending: true, is_main: true, created_at: new Date().toISOString() });
     memEventCounter = 1;
     console.log('✓ In-memory: default event seeded');
   }

@@ -7,6 +7,36 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var params = new URLSearchParams(window.location.search);
   var cta = params.get('cta');
+  var eventId = params.get('event') || '';
+
+  // Fetch event data if eventId or use trending
+  (async function loadEvent() {
+    var url = eventId ? '/api/events/' + eventId : '/api/events/trending';
+    try {
+      var r = await fetch(url);
+      var d = await r.json();
+      if (d.success && d.data) {
+        var ev = d.data;
+        eventId = ev.id;
+        var titleEl = document.getElementById('htmlTitle');
+        if (titleEl) titleEl.textContent = 'Register | ' + (ev.name || 'SilverVerse');
+        var metaDesc = document.getElementById('metaDesc');
+        if (metaDesc) metaDesc.content = 'Register for ' + (ev.name || 'Voices & Visions Festival') + '. Choose your category and secure your spot.';
+        var regTitle = document.getElementById('registerTitle');
+        if (regTitle && cta) regTitle.textContent = cta === 'contestant' ? 'Compete at ' + ev.name : 'Attend ' + ev.name;
+        else if (regTitle) regTitle.textContent = 'Register for ' + (ev.name || 'the Festival');
+        var regSub = document.getElementById('registerSubtitle');
+        if (regSub) regSub.textContent = ev.name ? ev.name + ' — Choose your path and join us' : 'Choose your path and join the festival';
+
+        // update CTA cards to preserve eventId
+        var ctaCards = document.querySelectorAll('.cta-card');
+        if (ctaCards.length) {
+          ctaCards[0].href = 'register.html?cta=contestant&event=' + ev.id;
+          ctaCards[1].href = 'register.html?cta=user&event=' + ev.id;
+        }
+      }
+    } catch (_e) {}
+  })();
 
   // Restore form state after payment redirect
   var returnStep = params.get('step');
@@ -47,6 +77,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var authUser = null;
   var registrationData = {
     cta: cta,
+    eventId: Number(eventId) || 0,
     category: '',
     subCategory: '',
     volunteerArea: '',
@@ -704,7 +735,8 @@ document.addEventListener('DOMContentLoaded', function () {
           amount: registrationData.amount,
           profileImage: registrationData.profileImage || '',
           paymentTxRef: txRef,
-          paymentStatus: txRef ? 'verified' : 'pending'
+          paymentStatus: txRef ? 'verified' : 'pending',
+          eventId: Number(eventId) || 0
         })
       });
       var regData = await regRes.json();
@@ -772,7 +804,8 @@ document.addEventListener('DOMContentLoaded', function () {
           amount: registrationData.amount,
           profileImage: registrationData.profileImage || '',
           paymentTxRef: txRef2,
-          paymentStatus: txRef2 ? 'verified' : 'pending'
+          paymentStatus: txRef2 ? 'verified' : 'pending',
+          eventId: Number(eventId) || 0
         })
       });
       var regData = await regRes.json();

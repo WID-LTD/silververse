@@ -394,7 +394,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     if (!tbody) return;
 
     if (events.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--gray-400);">No events found.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray-400);">No events found.</td></tr>';
       return;
     }
 
@@ -405,12 +405,18 @@ document.addEventListener('DOMContentLoaded', async function () {
           ? '<span class="badge badge-green">Active</span>'
           : '<span class="badge badge-yellow">Past</span>';
       var dateStr = ev.eventDate ? formatDate(ev.eventDate) : '\u2014';
+      var mainBadge = ev.isMain
+        ? '<span class="badge badge-gold">Main Event</span>'
+        : '<button class="action-btn action-main" title="Set as main event" data-action="set-main" data-eventid="' + ev.id + '">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
+          '</button>';
 
       return '<tr>' +
         '<td><strong>' + escapeHtml(ev.name || '') + '</strong></td>' +
         '<td>' + dateStr + '</td>' +
         '<td>' + escapeHtml(ev.venue || '') + '</td>' +
         '<td>' + statusBadge + '</td>' +
+        '<td style="text-align:center;">' + mainBadge + '</td>' +
         '<td>' +
           '<div class="cell-actions">' +
             '<button class="action-btn" title="Edit event" data-action="edit-event" data-eventid="' + ev.id + '">' +
@@ -430,6 +436,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         var eventId = this.getAttribute('data-eventid');
         if (action === 'edit-event') editEvent(eventId);
         else if (action === 'delete-event') apiDeleteEvent(eventId);
+        else if (action === 'set-main') setMainEvent(eventId);
       });
     });
   }
@@ -773,6 +780,26 @@ document.addEventListener('DOMContentLoaded', async function () {
       }
     } catch (_e) {
       showToast('Failed to delete event.', 'error');
+    }
+  }
+
+  async function setMainEvent(eventId) {
+    if (!confirm('Set this as the main event? The current main event will be unset.')) return;
+    try {
+      var res = await fetch('/api/admin/events/' + eventId + '/main', {
+        method: 'PUT',
+        credentials: 'same-origin'
+      });
+      var data = await res.json();
+      if (data.success) {
+        showToast('"' + (data.data.name || 'Event') + '" is now the main event.');
+        allEvents.forEach(function (e) { e.isMain = String(e.id) === String(eventId); });
+        renderEvents(allEvents);
+      } else {
+        showToast(data.message || 'Failed.', 'error');
+      }
+    } catch (_e) {
+      showToast('Failed to set main event.', 'error');
     }
   }
 

@@ -544,6 +544,12 @@
   background: var(--danger-light);
 }
 
+.admin-table .cell-actions .action-btn.action-main:hover {
+  border-color: var(--gold-dark);
+  color: var(--gold-dark);
+  background: var(--gold-50);
+}
+
 .admin-table .cell-actions .action-btn svg {
   width: 14px;
   height: 14px;

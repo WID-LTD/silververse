@@ -287,51 +287,51 @@ router.post('/bulk-print', requireAuth, async (req, res) => {
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SilverVerse Tickets</title>';
     html += '<style>';
     html += '*{margin:0;padding:0;box-sizing:border-box;}';
-    html += '@page{size:A4 landscape;margin:6mm;}';
+    html += '@page{size:A4 landscape;margin:2mm;}';
     html += '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}';
     html += 'body{font-family:Arial,Helvetica,sans-serif;background:#eee;}';
-    // Page: flex column, 3 tickets
-    html += '.page{width:285mm;min-height:198mm;display:flex;flex-direction:column;gap:4mm;padding:0;page-break-after:always;}';
+    // Page: flex column, 3 tickets, minimal gap
+    html += '.page{width:293mm;min-height:206mm;display:flex;flex-direction:column;gap:1.5mm;padding:0;page-break-after:always;}';
     html += '.page:last-child{page-break-after:auto;}';
-    // Scissor-cut wrap around each ticket
-    html += '.ticket-wrap{border:2px dashed #bbb;border-radius:4px;padding:3px;position:relative;flex:1;display:flex;flex-direction:column;}';
-    html += '.ticket-wrap::before{content:"\\2702";position:absolute;top:-7px;left:-7px;font-size:10px;color:#999;background:#eee;padding:1px 2px;line-height:1;}';
-    html += '.ticket-wrap::after{content:"\\2702";position:absolute;bottom:-7px;right:-7px;font-size:10px;color:#999;background:#eee;padding:1px 2px;line-height:1;transform:rotate(180deg);}';
+    // Scissor-cut wrap — thin border, minimal padding
+    html += '.ticket-wrap{border:1px dashed #bbb;border-radius:3px;padding:1.5px;position:relative;flex:1;display:flex;flex-direction:column;}';
+    html += '.ticket-wrap::before{content:"\\2702";position:absolute;top:-5px;left:-5px;font-size:8px;color:#999;background:#eee;padding:0 1px;line-height:1;}';
+    html += '.ticket-wrap::after{content:"\\2702";position:absolute;bottom:-5px;right:-5px;font-size:8px;color:#999;background:#eee;padding:0 1px;line-height:1;transform:rotate(180deg);}';
     // Split-ticket: 80% blue | tear | 18% white
-    html += '.split-ticket{display:flex;flex:1;border-radius:5px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.1);}';
+    html += '.split-ticket{display:flex;flex:1;border-radius:4px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);}';
     // Left panel — 80% blue gradient
     html += '.st-left{flex:0 0 80%;background:linear-gradient(135deg,#1e3a5f 0%,#0f1f3a 50%,#0a1628 100%);color:#fff;display:flex;flex-direction:column;position:relative;overflow:hidden;}';
-    html += '.st-left::before{content:"";position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(212,175,55,0.1) 0%,transparent 70%);pointer-events:none;}';
-    html += '.st-left-header{padding:7px 14px 0;position:relative;z-index:1;}';
-    html += '.st-logo{font-size:10px;font-weight:800;letter-spacing:3px;color:#d4af37;}';
-    html += '.st-pass-type{font-size:7px;font-weight:700;letter-spacing:2px;padding:3px 8px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.12);border-radius:3px;display:inline-block;margin-bottom:4px;}';
-    html += '.st-left-body{padding:0 14px;flex:1;position:relative;z-index:1;}';
-    html += '.st-event-name{font-size:11px;font-weight:700;margin-bottom:4px;line-height:1.2;}';
-    html += '.st-event-name::after{content:"";display:block;width:30px;height:2px;background:#d4af37;border-radius:2px;margin-top:4px;}';
-    html += '.st-field{display:flex;gap:4px;line-height:1.3;}';
-    html += '.st-label{color:rgba(255,255,255,0.5);white-space:nowrap;min-width:48px;font-size:8px;}';
-    html += '.st-val{color:#fff;font-weight:600;font-size:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}';
-    html += '.st-left-footer{padding:4px 14px;background:rgba(0,0,0,0.15);border-top:1px solid rgba(255,255,255,0.06);position:relative;z-index:1;}';
+    html += '.st-left::before{content:"";position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,rgba(212,175,55,0.08) 0%,transparent 70%);pointer-events:none;}';
+    html += '.st-left-header{padding:5px 10px 0;position:relative;z-index:1;}';
+    html += '.st-logo{font-size:20px;font-weight:900;letter-spacing:4px;color:#d4af37;}';
+    html += '.st-pass-type{font-size:14px;font-weight:800;letter-spacing:2px;padding:2px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:3px;display:inline-block;margin-bottom:2px;}';
+    html += '.st-left-body{padding:0 10px;flex:1;position:relative;z-index:1;}';
+    html += '.st-event-name{font-size:18px;font-weight:800;margin-bottom:3px;line-height:1.1;}';
+    html += '.st-event-name::after{content:"";display:block;width:30px;height:2px;background:#d4af37;border-radius:2px;margin-top:3px;}';
+    html += '.st-field{display:flex;gap:4px;line-height:1.1;margin-bottom:1px;}';
+    html += '.st-label{color:rgba(255,255,255,0.45);white-space:nowrap;min-width:62px;font-size:14px;font-weight:700;}';
+    html += '.st-val{color:#fff;font-weight:800;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}';
+    html += '.st-left-footer{padding:3px 10px;background:rgba(0,0,0,0.12);border-top:1px solid rgba(255,255,255,0.05);position:relative;z-index:1;}';
     // Tear line
     html += '.st-tear{flex:0 0 0;width:0;position:relative;z-index:2;}';
     html += '.st-tear-dot{width:10px;height:10px;background:#eee;border-radius:50%;position:absolute;left:-5px;box-shadow:inset 0 1px 3px rgba(0,0,0,0.08);}';
-    html += '.st-tear-dot.top{top:-5px;}';
-    html += '.st-tear-dot.bottom{bottom:-5px;}';
-    html += '.st-tear-line{position:absolute;left:0;top:5px;bottom:5px;width:2px;background:repeating-linear-gradient(to bottom,#bbb 0px,#bbb 4px,transparent 4px,transparent 8px);}';
+    html += '.st-tear-dot.top{top:-4px;}';
+    html += '.st-tear-dot.bottom{bottom:-4px;}';
+    html += '.st-tear-line{position:absolute;left:0;top:4px;bottom:4px;width:2px;background:repeating-linear-gradient(to bottom,#bbb 0px,#bbb 4px,transparent 4px,transparent 8px);}';
     // Right panel — white with rounded border
-    html += '.st-right{flex:0 0 18%;background:#fff;display:flex;align-items:center;justify-content:center;padding:6px 4px;border-left:2px dashed #ddd;border-radius:0 5px 5px 0;}';
-    html += '.st-right-content{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;width:100%;}';
+    html += '.st-right{flex:0 0 18%;background:#fff;display:flex;align-items:center;justify-content:center;padding:6px 3px;border-left:2px dashed #ddd;border-radius:0 4px 4px 0;}';
+    html += '.st-right-content{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;width:100%;}';
     html += '.st-qr img{display:block;border:2px solid #f0f0f0;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,0.05);}';
-    html += '.st-qr-label{font-size:5px;font-weight:700;letter-spacing:1.5px;color:#999;}';
-    html += '.st-right-id{font-size:7px;font-weight:700;color:#555;letter-spacing:0.5px;}';
-    html += '.st-right-status{font-size:6px;font-weight:800;letter-spacing:1px;padding:2px 6px;border-radius:3px;}';
+    html += '.st-qr-label{font-size:9px;font-weight:700;letter-spacing:1.5px;color:#999;}';
+    html += '.st-right-id{font-size:13px;font-weight:800;color:#333;letter-spacing:0.5px;}';
+    html += '.st-right-status{font-size:11px;font-weight:800;letter-spacing:1px;padding:2px 8px;border-radius:3px;}';
     html += '.status-approved{background:#d1fae5;color:#059669;}';
     html += '.status-pending{background:#fef3c7;color:#d97706;}';
     // Bottom bar
-    html += '.st-bottom-bar{display:flex;justify-content:space-between;align-items:center;padding:3px 14px;background:#f8f8f8;border-top:1px solid #e5e5e5;border-radius:0 0 3px 3px;}';
-    html += '.st-powered{font-size:7px;color:#aaa;}';
+    html += '.st-bottom-bar{display:flex;justify-content:space-between;align-items:center;padding:3px 10px;background:#f8f8f8;border-top:1px solid #e5e5e5;border-radius:0 0 3px 3px;}';
+    html += '.st-powered{font-size:12px;color:#aaa;}';
     html += '.st-powered strong{color:#1e3a5f;}';
-    html += '.st-id-small{font-size:7px;font-weight:700;color:#bbb;letter-spacing:0.5px;}';
+    html += '.st-id-small{font-size:12px;font-weight:700;color:#bbb;letter-spacing:0.5px;}';
     html += '<\/style></head><body>';
     html += '<div id="printArea">';
 

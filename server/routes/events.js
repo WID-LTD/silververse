@@ -14,6 +14,7 @@ function camelRow(row) {
     venue: row.venue || '',
     status: row.status || 'upcoming',
     isTrending: row.is_trending || row.isTrending || false,
+    isMain: row.is_main || row.isMain || false,
     createdAt: row.created_at || row.createdAt || '',
   };
 }
@@ -23,7 +24,7 @@ router.get('/trending', async (req, res) => {
   try {
     if (isDBEnabled()) {
       const sql = getSQL();
-      const result = await sql`SELECT * FROM events WHERE is_trending = true LIMIT 1`;
+      const result = await sql`SELECT * FROM events WHERE is_main = true LIMIT 1`;
       if (result.length === 0) {
         const first = await sql`SELECT * FROM events ORDER BY id ASC LIMIT 1`;
         if (first.length === 0) return res.status(404).json({ success: false, message: 'No events found' });
@@ -32,7 +33,7 @@ router.get('/trending', async (req, res) => {
       res.json({ success: true, data: camelRow(result[0]) });
     } else {
       const events = getMemEvents();
-      let trending = events.find(e => e.is_trending);
+      let trending = events.find(e => e.is_main);
       if (!trending) trending = events[0];
       if (!trending) return res.status(404).json({ success: false, message: 'No events found' });
       res.json({ success: true, data: camelRow(trending) });

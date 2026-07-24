@@ -112,7 +112,7 @@
         <div class="hero-overlay"></div>
       </div>
       <div class="container hero-content">
-        <a href="register.html" class="hero-badge">
+        <a href="register.html" class="hero-badge" id="heroBadge">
           <span class="badge-dot"></span>
           <span class="badge-text">Registration Now Open</span>
           <span class="badge-arrow">&rarr;</span>
@@ -120,13 +120,9 @@
 
         <div class="hero-eyebrow">SilverVerse Presents</div>
 
-        <h1>
-          Voices
-          <span class="accent-gold">&amp; Visions</span>
-          <span class="accent-sub">Festival 2026</span>
-        </h1>
+        <h1 id="heroTitle">Voices <span class="accent-gold">&amp; Visions</span> <span class="accent-sub">Festival 2026</span></h1>
 
-        <p class="hero-tagline">
+        <p class="hero-tagline" id="heroTagline">
           Discovering Talent. Inspiring Purpose. Building the Future.
           A celebration of creativity, performance, and purpose-driven expression.
         </p>
@@ -149,11 +145,11 @@
         <div class="hero-countdown" id="countdown"></div>
 
         <div class="hero-actions">
-          <a href="register.html?cta=contestant" class="btn btn-gold">
+          <a href="register.html?cta=contestant" class="btn btn-gold" id="heroCompeteBtn">
             I Want to Compete
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
-          <a href="register.html?cta=user" class="btn btn-premium">
+          <a href="register.html?cta=user" class="btn btn-premium" id="heroAttendBtn">
             I Want to Attend
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
@@ -197,9 +193,9 @@
             </div>
           </div>
           <div class="about-text reveal-right">
-            <h2>A Platform for Emerging Talent</h2>
-            <p>The Voices &amp; Visions Festival is SilverVerse's flagship event &mdash; a one-day celebration of raw talent, creative expression, and purpose-driven storytelling. Founded in 2026, SilverVerse was created to bridge the gap between undiscovered talent and life-changing opportunities.</p>
-            <p>Whether you're a performer ready to take the stage, a judge lending your expertise, a volunteer supporting the movement, or a spectator cheering from the crowd &mdash; this festival is for you. Our mission is to discover, nurture, and showcase exceptional talent from across Nigeria.</p>
+            <h2 id="aboutTitle">A Platform for Emerging Talent</h2>
+            <p id="aboutDesc1">The Voices &amp; Visions Festival is SilverVerse's flagship event &mdash; a one-day celebration of raw talent, creative expression, and purpose-driven storytelling. Founded in 2026, SilverVerse was created to bridge the gap between undiscovered talent and life-changing opportunities.</p>
+            <p id="aboutDesc2">Whether you're a performer ready to take the stage, a judge lending your expertise, a volunteer supporting the movement, or a spectator cheering from the crowd &mdash; this festival is for you. Our mission is to discover, nurture, and showcase exceptional talent from across Nigeria.</p>
             <div class="theme-callout">
               <strong>Theme:</strong> Discovering Talent. Inspiring Purpose. Building the Future.
             </div>
@@ -915,6 +911,23 @@
         var ev = data.data;
         eventId = ev.id;
         var d = ev.event_date ? new Date(ev.event_date) : null;
+
+        // — Page title —
+        if(ev.name){
+          document.title = 'SilverVerse | ' + ev.name;
+          var metaDesc = document.querySelector('meta[name="description"]');
+          if(metaDesc) metaDesc.content = ev.name + ' — Register now for Nigeria\'s premier talent festival.';
+        }
+
+        // — Hero h1 —
+        var heroTitle = document.getElementById('heroTitle');
+        if(heroTitle && ev.name) heroTitle.innerHTML = escapeHtml(ev.name);
+
+        // — Hero tagline —
+        var tagline = document.getElementById('heroTagline');
+        if(tagline && ev.description) tagline.textContent = ev.description;
+
+        // — Date / Venue / Time —
         if(d && !isNaN(d.getTime())){
           var opts = { year:'numeric', month:'long', day:'numeric' };
           var dateEl = document.querySelector('.hero-detail:nth-child(1) span');
@@ -930,6 +943,24 @@
         if(ev.event_time){
           var timeEl = document.querySelector('.hero-detail:nth-child(3) span');
           if(timeEl) timeEl.textContent = ev.event_time;
+        }
+
+        // — Register links with eventId —
+        var competeBtn = document.getElementById('heroCompeteBtn');
+        var attendBtn = document.getElementById('heroAttendBtn');
+        var badge = document.getElementById('heroBadge');
+        if(competeBtn) competeBtn.href = 'register.html?cta=contestant&event=' + eventId;
+        if(attendBtn) attendBtn.href = 'register.html?cta=user&event=' + eventId;
+        if(badge) badge.href = 'register.html?event=' + eventId;
+
+        // — About section —
+        if(ev.name){
+          var aboutTitle = document.getElementById('aboutTitle');
+          if(aboutTitle) aboutTitle.textContent = ev.name + ' — A Platform for Talent';
+        }
+        if(ev.description){
+          var aboutDesc1 = document.getElementById('aboutDesc1');
+          if(aboutDesc1) aboutDesc1.textContent = ev.name + ' is SilverVerse\'s flagship event — ' + ev.description;
         }
       })
       .catch(function(){});

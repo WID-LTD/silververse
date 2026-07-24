@@ -321,7 +321,8 @@ router.get('/events', requireAdmin, async (req, res) => {
         success: true,
         data: result.map(e => ({
           id: e.id, name: e.name, description: e.description,
-          eventDate: e.event_date, venue: e.venue, status: e.status, createdAt: e.created_at
+          eventDate: e.event_date, venue: e.venue, status: e.status,
+          isMain: e.is_main || false, createdAt: e.created_at
         }))
       });
     } else {
@@ -330,7 +331,8 @@ router.get('/events', requireAdmin, async (req, res) => {
         success: true,
         data: events.map(e => ({
           id: e.id, name: e.name, description: e.description,
-          eventDate: e.event_date, venue: e.venue, status: e.status, createdAt: e.created_at
+          eventDate: e.event_date, venue: e.venue, status: e.status,
+          isMain: e.is_main || false, createdAt: e.created_at
         }))
       });
     }
@@ -421,6 +423,34 @@ router.put('/events/:id', requireAdmin, async (req, res) => {
     }
   } catch (err) {
     console.error('Update event error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── PUT /events/:id/main — Set event as main (unset others) ──
+router.put('/events/:id/main', requireAdmin, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isDBEnabled()) {
+      const sql = getSQL();
+      // unset all
+      await sql`UPDATE events SET is_main = false`;
+      // set selected
+      const result = await sql`UPDATE events SET is_main = true WHERE id = ${id} RETURNING *`;
+      if (result.length === 0) return res.status(404).json({ success: false, message: 'Event not found' });
+      res.json({ success: true, data: {
+        id: result[0].id, name: result[0].name, isMain: true
+      }});
+    } else {
+      const events = getMemEvents();
+      events.forEach(e => e.is_main = false);
+      const ev = events.find(e => e.id === id);
+      if (!ev) return res.status(404).json({ success: false, message: 'Event not found' });
+      ev.is_main = true;
+      res.json({ success: true, data: { id: ev.id, name: ev.name, isMain: true }});
+    }
+  } catch (err) {
+    console.error('Set main event error:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
