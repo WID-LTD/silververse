@@ -1423,7 +1423,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       '<p style="font-size:0.8rem;color:var(--gray-500);margin-top:12px;">One ticket per page. Select tickets above, then choose format.</p>',
       '<button class="btn btn-outline btn-sm" id="modalCancelBtn">Cancel</button>' +
       '<button class="btn btn-primary btn-sm" id="dltPdfBtn">Download PDF</button>' +
-      '<button class="btn btn-primary btn-sm" id="dltPngBtn">Download PNG</button>' +
+      '<button class="btn btn-primary btn-sm" id="dltHtmlBtn">View Ticket</button>' +
       '<button class="btn btn-primary btn-sm" id="dltPrintBtn">Print</button>',
       function () {});
 
@@ -1439,10 +1439,10 @@ document.addEventListener('DOMContentLoaded', async function () {
       downloadTickets(sel, 'pdf');
       closeModal();
     });
-    document.getElementById('dltPngBtn').addEventListener('click', function () {
+    document.getElementById('dltHtmlBtn').addEventListener('click', function () {
       var sel = selectedIds();
       if (sel.length === 0) { showToast('Select at least one ticket.', 'error'); return; }
-      downloadTickets(sel, 'png');
+      downloadTickets(sel, 'html');
       closeModal();
     });
     document.getElementById('dltPrintBtn').addEventListener('click', function () {
@@ -1454,29 +1454,54 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 
   function downloadTickets(ids, format) {
-    ids.forEach(function (regId) {
-      var url = '/api/tickets/' + encodeURIComponent(regId) + '/download?format=' + format;
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = regId + '_ticket.' + format;
-      a.target = '_blank';
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+    ids.forEach(async function (regId) {
+      if (format === 'html') {
+        window.open('/api/ticket/' + encodeURIComponent(regId) + '/download?format=html', '_blank');
+        return;
+      }
+      var url = '/api/ticket/' + encodeURIComponent(regId) + '/download?format=' + format;
+      try {
+        var res = await fetch(url, { credentials: 'include' });
+        if (!res.ok) { showToast('Failed to download ' + regId, 'error'); return; }
+        var blob = await res.blob();
+        var blobUrl = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = regId + '_ticket.' + (format === 'pdf' ? 'pdf' : 'html');
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      } catch (_e) {
+        showToast('Failed to download ' + regId, 'error');
+      }
     });
-    showToast('Downloading ' + ids.length + ' ticket(s)...');
+    showToast(format === 'html' ? 'Opening ticket(s)...' : 'Downloading ' + ids.length + ' ticket(s)...');
   }
 
   function printTickets(ids) {
     var printWindow = window.open('', '_blank');
     printWindow.document.write('<html><head><title>Print Tickets</title></head><body>');
     ids.forEach(function (regId) {
-      printWindow.document.write('<img src="/api/tickets/' + encodeURIComponent(regId) + '/download?format=png" style="width:100%;max-width:600px;display:block;margin:0 auto 20px;page-break-after:always;">');
+        function printTickets(ids) {
+    ids.forEach(async function (regId) {
+      try {
+        var res = await fetch('/api/ticket/' + encodeURIComponent(regId) + '/download?format=html', { credentials: 'include' });
+        if (!res.ok) { showToast('Failed to load ' + regId, 'error'); return; }
+        var html = await res.text();
+        var w = window.open('', '_blank');
+        if (w) {
+          w.document.write(html);
+          w.document.close();
+          w.onload = function () { w.print(); };
+        }
+      } catch (_e) {
+        showToast('Failed to load ' + regId, 'error');
+      }
     });
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    printWindow.onload = function () { printWindow.print(); };
+    showToast('Opening ' + ids.length + ' ticket(s) for printing...');
+  }
   }
 
   // ═══════════════════════════════════════

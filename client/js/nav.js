@@ -27,12 +27,14 @@
     var container = document.getElementById('navLinks');
     if (!container) return;
     var pathname = window.location.pathname.split('/').pop() || 'index.html';
+    var authEl = container.querySelector('#navAuth');
     var html = '';
     NAV_PAGES.forEach(function (p) {
       var activeClass = p.href === pathname ? ' active' : '';
       html += '<li><a href="' + escapeAttr(p.href) + '" class="nav-page-link' + activeClass + '">' + escapeHtml(p.label) + '</a></li>';
     });
     container.innerHTML = html;
+    if (authEl) container.appendChild(authEl);
   }
 
   async function checkAuthState() {
