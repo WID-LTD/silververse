@@ -22,7 +22,7 @@
       var res = await fetch('/api/events', { credentials: 'same-origin' });
       if (!res.ok) throw new Error('Failed to fetch events');
       var data = await res.json();
-      var events = data.events || data;
+      var events = data.data || data.events || [];
 
       if (!Array.isArray(events) || events.length === 0) {
         grid.innerHTML = renderEmpty();

@@ -31,6 +31,9 @@ router.post('/signup', async (req, res) => {
     if (!username || !email || !password) {
       return res.status(400).json({ success: false, message: 'Username, email, and password are required' });
     }
+    if (username.length > 50) {
+      return res.status(400).json({ success: false, message: 'Username must be 50 characters or less' });
+    }
 
     const lowerUsername = username.toLowerCase();
     const hash = bcrypt.hashSync(password, 10);

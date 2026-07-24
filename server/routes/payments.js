@@ -201,6 +201,7 @@ router.post('/webhook', async (req, res) => {
 // ── GET /config — Public config ──
 router.get('/config', (req, res) => {
   res.json({
+    success: true,
     publicKey: process.env.FLW_PUBLIC_KEY || '',
     enabled: FLW_ENABLED,
     prices: TICKET_PRICES,

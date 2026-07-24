@@ -24,7 +24,7 @@
         return res.json();
       })
       .then(function (data) {
-        allVideos = Array.isArray(data) ? data : (data.videos || []);
+        allVideos = data.data || data.videos || [];
         renderFilters();
         renderGrid();
       })

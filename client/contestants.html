@@ -215,6 +215,39 @@
       return div.innerHTML;
     }
 
+    var contestantModal = document.createElement('div');
+    contestantModal.className = 'contestant-modal';
+    contestantModal.innerHTML = '<div class="contestant-modal-backdrop"></div><div class="contestant-modal-content"><button class="contestant-modal-close">&times;</button><div class="contestant-modal-body"></div></div>';
+    document.body.appendChild(contestantModal);
+
+    function openContestantModal(c) {
+      var name = (c.firstName || '') + ' ' + (c.lastName || '');
+      var imgHtml = c.profileImage
+        ? '<img src="' + escapeHtml(c.profileImage) + '" alt="' + escapeHtml(name) + '">'
+        : '<div class="contestant-modal-avatar"><span>' + (c.firstName || '?').charAt(0).toUpperCase() + '</span></div>';
+      contestantModal.querySelector('.contestant-modal-body').innerHTML =
+        '<div class="contestant-modal-img">' + imgHtml + '</div>' +
+        '<div class="contestant-modal-info">' +
+          '<h2>' + escapeHtml(name) + '</h2>' +
+          '<div class="contestant-modal-tag">' + escapeHtml(c.category || 'Contestant') + '</div>' +
+          (c.subCategory ? '<div class="contestant-modal-sub">' + escapeHtml(c.subCategory) + '</div>' : '') +
+          (c.talent ? '<div class="contestant-modal-detail"><strong>Talent:</strong> ' + escapeHtml(c.talent) + '</div>' : '') +
+          (c.talentDescription ? '<div class="contestant-modal-detail"><strong>About:</strong> ' + escapeHtml(c.talentDescription) + '</div>' : '') +
+          '<div class="contestant-modal-contact"><em>Kindly contact admin for more details</em></div>' +
+        '</div>';
+      contestantModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeContestantModal() {
+      contestantModal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    contestantModal.querySelector('.contestant-modal-close').addEventListener('click', closeContestantModal);
+    contestantModal.querySelector('.contestant-modal-backdrop').addEventListener('click', closeContestantModal);
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeContestantModal(); });
+
     function buildCard(c) {
       var name = (c.firstName || '') + ' ' + (c.lastName || '');
       var initial = (c.firstName || '?').charAt(0).toUpperCase();
@@ -244,11 +277,23 @@
       '</div>';
     }
 
+    function attachCardClicks() {
+      grid.querySelectorAll('.contestant-card').forEach(function(card, idx) {
+        card.addEventListener('click', function() {
+          var cat = this.getAttribute('data-category');
+          var filtered = cat ? allContestants.filter(function(c){ return c.category === cat; }) : allContestants;
+          var contestant = filtered[idx];
+          if (contestant) openContestantModal(contestant);
+        });
+      });
+    }
+
     function render(category) {
       var filtered = category ? allContestants.filter(function(c){ return c.category === category; }) : allContestants;
       var html = '';
       filtered.forEach(function(c){ html += buildCard(c); });
       grid.innerHTML = html;
+      attachCardClicks();
       if (countEl) {
         countEl.innerHTML = '<strong>' + filtered.length + '</strong> contestant' + (filtered.length !== 1 ? 's' : '') + ' found';
       }
