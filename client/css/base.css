@@ -289,32 +289,38 @@ img {
 .navbar-links {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   list-style: none;
+  margin: 0;
 }
 
-.navbar-links a {
-  color: rgba(255,255,255,0.85);
-  font-size: 0.875rem;
+.navbar-links .nav-page-link {
+  color: rgba(255,255,255,0.8);
+  font-size: 0.85rem;
   font-weight: 500;
-  transition: color 0.2s;
+  padding: 6px 14px;
+  border-radius: 8px;
+  transition: all 0.2s;
   display: inline-flex;
   align-items: center;
   white-space: nowrap;
+  letter-spacing: 0.3px;
 }
 
-.navbar-scrolled .navbar-links a {
+.navbar-scrolled .navbar-links .nav-page-link {
   color: var(--gray-600);
 }
 
-.navbar-links a:hover,
-.navbar-links a.active {
+.navbar-links .nav-page-link:hover,
+.navbar-links .nav-page-link.active {
   color: var(--white);
+  background: rgba(255,255,255,0.1);
 }
 
-.navbar-scrolled .navbar-links a:hover,
-.navbar-scrolled .navbar-links a.active {
+.navbar-scrolled .navbar-links .nav-page-link:hover,
+.navbar-scrolled .navbar-links .nav-page-link.active {
   color: var(--primary);
+  background: rgba(30,64,175,0.08);
 }
 
 .mobile-toggle {
@@ -342,17 +348,102 @@ img {
   top: var(--header-height);
   left: 0;
   right: 0;
-  background: var(--white);
-  padding: 24px;
+  background: rgba(255,255,255,0.98);
+  backdrop-filter: blur(16px);
+  padding: 16px 24px 24px;
   box-shadow: var(--shadow-lg);
   z-index: 999;
-  gap: 4px;
+  gap: 2px;
+  border-bottom: 1px solid var(--gray-200);
 }
 
-.navbar-links.show a {
+.navbar-links.show .nav-page-link {
   color: var(--gray-700) !important;
-  padding: 10px 0;
-  font-size: 1rem;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  border-radius: 8px;
+}
+
+.navbar-links.show .nav-page-link:hover {
+  background: rgba(30,64,175,0.06) !important;
+  color: var(--primary) !important;
+}
+
+.navbar-links.show #navAuth {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 0 0;
+  margin-top: 8px;
+  border-top: 1px solid var(--gray-200);
+  width: 100%;
+}
+
+.nav-register-link {
+  background: var(--gold) !important;
+  color: var(--primary-dark) !important;
+  padding: 6px 16px !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  border: 2px solid var(--gold) !important;
+  transition: all 0.2s !important;
+  display: inline-flex;
+  align-items: center;
+}
+
+.navbar-scrolled .nav-register-link {
+  background: transparent !important;
+  color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+.nav-register-link:hover {
+  background: var(--gold) !important;
+  color: var(--primary-dark) !important;
+  border-color: var(--gold) !important;
+}
+
+.nav-logout-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.8);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.navbar-scrolled .nav-logout-btn {
+  border-color: var(--gray-300);
+  color: var(--gray-600);
+}
+
+.nav-logout-btn:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--white);
+}
+
+.navbar-scrolled .nav-logout-btn:hover {
+  background: var(--gray-100);
+  color: var(--danger);
+}
+
+.nav-admin-link {
+  font-weight: 600 !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  background: rgba(212,160,23,0.15) !important;
+  color: var(--gold) !important;
+  font-size: 0.8rem !important;
+}
+
+.navbar-scrolled .nav-admin-link {
+  background: rgba(212,160,23,0.1) !important;
+  color: var(--gold-dark) !important;
 }
 
 /* ─── Nav User Badge & Avatar ─── */

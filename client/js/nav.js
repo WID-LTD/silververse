@@ -1,14 +1,20 @@
-/* ═══════════════════════════════════════
-   SilverVerse — Shared Navigation
-   Loaded on every page
-   ═══════════════════════════════════════ */
-
 (function () {
   'use strict';
 
   document.addEventListener('DOMContentLoaded', init);
 
+  var NAV_PAGES = [
+    { label: 'Home', href: 'index.html' },
+    { label: 'About', href: 'about.html' },
+    { label: 'Events', href: 'events.html' },
+    { label: 'Contestants', href: 'contestants.html' },
+    { label: 'Videos', href: 'videos.html' },
+    { label: 'Blog', href: 'blog.html' },
+    { label: 'Contact', href: 'contact.html' },
+  ];
+
   async function init() {
+    renderNavLinks();
     await checkAuthState();
     setupMobileToggle();
     setupNavbarScroll();
@@ -17,7 +23,18 @@
     setupSmoothScroll();
   }
 
-  /* ── 1. Check Auth State ── */
+  function renderNavLinks() {
+    var container = document.getElementById('navLinks');
+    if (!container) return;
+    var pathname = window.location.pathname.split('/').pop() || 'index.html';
+    var html = '';
+    NAV_PAGES.forEach(function (p) {
+      var activeClass = p.href === pathname ? ' active' : '';
+      html += '<li><a href="' + escapeAttr(p.href) + '" class="nav-page-link' + activeClass + '">' + escapeHtml(p.label) + '</a></li>';
+    });
+    container.innerHTML = html;
+  }
+
   async function checkAuthState() {
     var authContainer = document.getElementById('navAuth');
     if (!authContainer) return;
@@ -58,24 +75,21 @@
       }
     } catch (_err) {
       authContainer.innerHTML =
-        '<a href="login.html" class="nav-login-link">Login</a>';
+        '<a href="login.html" class="nav-login-link">Login</a>' +
+        '<a href="register.html" class="nav-register-link">Register</a>';
     }
   }
 
-  /* ── 2. Logout ── */
   async function handleLogout() {
     try {
       await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'same-origin',
       });
-    } catch (_err) {
-      // Redirect anyway
-    }
+    } catch (_err) {}
     window.location.href = 'index.html';
   }
 
-  /* ── 3. Mobile Hamburger Toggle ── */
   function setupMobileToggle() {
     var toggle = document.querySelector('.mobile-toggle');
     var links = document.getElementById('navLinks');
@@ -89,11 +103,11 @@
       toggle.setAttribute('aria-expanded', String(isOpen));
     });
 
-    links.querySelectorAll('a').forEach(function (link) {
-      link.addEventListener('click', function () {
+    links.addEventListener('click', function (e) {
+      if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') {
         links.classList.remove('show');
         toggle.setAttribute('aria-expanded', 'false');
-      });
+      }
     });
 
     document.addEventListener('click', function (e) {
@@ -104,7 +118,6 @@
     });
   }
 
-  /* ── 4. Navbar Scroll Effect ── */
   function setupNavbarScroll() {
     var navbar = document.querySelector('.navbar');
     if (!navbar) return;
@@ -121,7 +134,6 @@
     window.addEventListener('scroll', onScroll, { passive: true });
   }
 
-  /* ── 5. Active Page Highlighting ── */
   function highlightActivePage() {
     var pathname = window.location.pathname.split('/').pop() || 'index.html';
     document.querySelectorAll('.navbar-links a[href]').forEach(function (link) {
@@ -132,7 +144,6 @@
     });
   }
 
-  /* ── 6. Back-to-Top Button ── */
   function setupBackToTop() {
     var btn = document.getElementById('backToTop');
     if (!btn) return;
@@ -151,7 +162,6 @@
     });
   }
 
-  /* ── 7. Smooth Scroll for Anchor Links ── */
   function setupSmoothScroll() {
     document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
       anchor.addEventListener('click', function (e) {
@@ -169,7 +179,6 @@
     });
   }
 
-  /* ── Utilities ── */
   function escapeHtml(str) {
     var div = document.createElement('div');
     div.textContent = str;

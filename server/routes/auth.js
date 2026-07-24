@@ -104,7 +104,7 @@ router.post('/login', async (req, res) => {
 
     if (isDBEnabled()) {
       const sql = getSQL();
-      const result = await sql`SELECT * FROM users WHERE username = ${lowerUsername}`;
+      const result = await sql`SELECT * FROM users WHERE LOWER(username) = ${lowerUsername} OR LOWER(email) = ${lowerUsername}`;
       if (result.length === 0) {
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
       }
@@ -135,7 +135,7 @@ router.post('/login', async (req, res) => {
       });
     } else {
       const users = getMemUsers();
-      const user = users.find(u => u.username === lowerUsername);
+      const user = users.find(u => u.username === lowerUsername || (u.email && u.email.toLowerCase() === lowerUsername));
       if (!user) {
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
       }

@@ -164,7 +164,18 @@
   </style>
 </head>
 <body>
-  <div id="nav-root"></div>
+  <nav class="navbar no-print" aria-label="Primary navigation">
+    <div class="container">
+      <a href="index.html" class="navbar-brand">
+        <img src="public/silververse.png" alt="SilverVerse" width="40" height="40" style="border-radius:8px">
+        SilverVerse
+      </a>
+      <ul class="navbar-links" id="navLinks"></ul>
+      <button class="mobile-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navLinks">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </nav>
 
   <div class="payment-result">
     <div class="confetti-wrap" id="confettiWrap">
@@ -254,8 +265,13 @@
           if (d.success && d.data && d.data.status === 'successful') {
             showResult('success');
             setTimeout(function () {
+              var savedCta = 'user';
+              try {
+                var saved = JSON.parse(sessionStorage.getItem('svRegData') || '{}');
+                savedCta = saved.cta || 'user';
+              } catch (_e) {}
               var regParams = new URLSearchParams();
-              regParams.set('cta', regId ? 'contestant' : 'user');
+              regParams.set('cta', savedCta);
               regParams.set('step', '4');
               regParams.set('tx_ref', txRefParam);
               window.location.href = 'register.html?' + regParams.toString();

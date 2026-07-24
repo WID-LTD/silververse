@@ -34,7 +34,7 @@ async function ensureToken() {
   return accessToken;
 }
 
-router.post('/init', requireAuth, async (req, res) => {
+router.post('/init', async (req, res) => {
   if (!FLW_ENABLED) {
     return res.status(503).json({ success: false, message: 'Payment not configured' });
   }
@@ -130,7 +130,7 @@ router.post('/init', requireAuth, async (req, res) => {
   }
 });
 
-router.get('/verify/:tx_ref', requireAuth, async (req, res) => {
+router.get('/verify/:tx_ref', async (req, res) => {
   if (!FLW_ENABLED) {
     return res.status(503).json({ success: false, message: 'Payment not configured' });
   }

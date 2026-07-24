@@ -755,7 +755,7 @@ router.post('/registrations', requireAdmin, async (req, res) => {
 
     const regIds = [];
     for (const reg of registrations) {
-      if (!reg.firstName || !reg.lastName || !reg.email || !reg.phone || !reg.category) {
+      if (!reg.firstName || !reg.lastName || !reg.email || !reg.category) {
         return res.status(400).json({ success: false, message: 'Missing required fields in registration entry' });
       }
 
@@ -768,7 +768,7 @@ router.post('/registrations', requireAdmin, async (req, res) => {
 
         await sql`
           INSERT INTO registrations (user_id, reg_id, event_id, first_name, last_name, email, phone, category, sub_category, ticket_type, amount_paid, payment_status, payment_tx_ref)
-          VALUES (${req.session.userId}, ${regId}, ${resolvedEventId}, ${reg.firstName}, ${reg.lastName}, ${reg.email.toLowerCase()}, ${reg.phone}, ${reg.category}, ${reg.subCategory || ''}, ${reg.ticketType || 'Regular'}, ${reg.amount || 0}, 'verified', 'admin-bypass')
+          VALUES (${req.session.userId}, ${regId}, ${resolvedEventId}, ${reg.firstName}, ${reg.lastName}, ${reg.email.toLowerCase()}, ${reg.phone || ''}, ${reg.category}, ${reg.subCategory || ''}, ${reg.ticketType || 'Regular'}, ${reg.amount || 0}, ${reg.paymentStatus || 'verified'}, ${reg.paymentTxRef || 'admin-bypass'})
         `;
       } else {
         const regs = getMemRegistrations();
@@ -776,10 +776,10 @@ router.post('/registrations', requireAdmin, async (req, res) => {
         const resolvedEventId = events.length > 0 ? events[0].id : null;
         regs.push({
           id: regs.length + 1, user_id: req.session.userId, reg_id: regId, event_id: resolvedEventId,
-          first_name: reg.firstName, last_name: reg.lastName, email: reg.email.toLowerCase(), phone: reg.phone,
+          first_name: reg.firstName, last_name: reg.lastName, email: reg.email.toLowerCase(), phone: reg.phone || '',
           category: reg.category, sub_category: reg.subCategory || '', ticket_type: reg.ticketType || 'Regular',
           talent: '', talent_description: '', perf_time: '', profile_image: '', qr_code: '',
-          payment_status: 'verified', payment_tx_ref: 'admin-bypass', amount_paid: reg.amount || 0,
+          payment_status: reg.paymentStatus || 'verified', payment_tx_ref: reg.paymentTxRef || 'admin-bypass', amount_paid: reg.amount || 0,
           checked_in: false, checked_in_time: null, created_at: new Date().toISOString()
         });
       }

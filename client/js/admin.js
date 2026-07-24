@@ -572,7 +572,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 
   /* ═══ EXPORT CSV ═══ */
-  var exportBtn = document.getElementById('exportCsvBtn');
+  var exportBtn = document.getElementById('exportRegBtn');
   if (exportBtn) {
     exportBtn.addEventListener('click', function () {
       window.open('/api/admin/export/registrations', '_blank');
@@ -803,57 +803,199 @@ document.addEventListener('DOMContentLoaded', async function () {
   var addVideoBtn = document.getElementById('addVideoBtn');
   if (addVideoBtn) {
     addVideoBtn.addEventListener('click', function () {
-      openModal('Add Video',
+      var modalHtml =
         '<div class="form-group"><label for="videoTitle">Title *</label><input type="text" id="videoTitle" placeholder="Video title"></div>' +
-        '<div class="form-group"><label for="videoType">Type</label><select id="videoType">' +
-          '<option value="youtube">YouTube URL</option>' +
-          '<option value="upload">Upload File</option>' +
-        '</select></div>' +
-        '<div class="form-group" id="videoUrlGroup"><label for="videoUrl">YouTube URL *</label><input type="url" id="videoUrl" placeholder="https://youtube.com/watch?v=..."></div>' +
+        '<div class="form-group">' +
+          '<label>Video Source</label>' +
+          '<div class="video-source-tabs" style="display:flex;gap:8px;margin-bottom:12px;">' +
+            '<button class="btn btn-sm source-tab active" data-source="upload" style="flex:1;">Upload File</button>' +
+            '<button class="btn btn-sm source-tab" data-source="youtube" style="flex:1;">YouTube URL</button>' +
+          '</div>' +
+        '</div>' +
+        '<div id="videoSourceUpload">' +
+          '<div class="upload-dropzone" id="videoDropzone" style="border:2px dashed var(--gray-300);border-radius:12px;padding:40px 20px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--gray-50);">' +
+            '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="1.5" style="margin-bottom:12px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' +
+            '<p style="color:var(--gray-500);margin:0 0 4px;"><strong>Click to upload</strong> or drag and drop</p>' +
+            '<p style="color:var(--gray-400);font-size:0.8rem;margin:0;">MP4, WebM, MOV (max 100MB)</p>' +
+            '<input type="file" id="videoFileInput" accept="video/mp4,video/webm,video/quicktime" style="display:none;">' +
+          '</div>' +
+          '<div id="videoFileInfo" style="display:none;padding:12px;background:var(--primary-50);border-radius:8px;margin-top:8px;font-size:0.85rem;"></div>' +
+          '<div id="uploadProgressWrap" style="display:none;margin-top:12px;">' +
+            '<div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:4px;">' +
+              '<span id="uploadPercent">0%</span>' +
+              '<span id="uploadSpeed" style="color:var(--gray-500);"></span>' +
+            '</div>' +
+            '<div style="height:6px;background:var(--gray-200);border-radius:3px;overflow:hidden;">' +
+              '<div id="uploadProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--primary),var(--primary-light));border-radius:3px;transition:width 0.3s;"></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div id="videoSourceYoutube" style="display:none;">' +
+          '<div class="form-group"><label for="videoUrl">YouTube URL *</label><input type="url" id="videoUrl" placeholder="https://youtube.com/watch?v=..."></div>' +
+        '</div>' +
         '<div class="form-row">' +
           '<div class="form-group"><label for="videoCategory">Category</label><input type="text" id="videoCategory" placeholder="e.g. Music, Dance"></div>' +
           '<div class="form-group"><label for="videoDuration">Duration</label><input type="text" id="videoDuration" placeholder="e.g. 12:34"></div>' +
-        '</div>',
+        '</div>';
+
+      openModal('Add Video',
+        modalHtml,
         '<button class="btn btn-outline btn-sm" id="modalCancelBtn">Cancel</button>' +
         '<button class="btn btn-primary btn-sm" id="modalSaveBtn">Save Video</button>'
       );
 
-      document.getElementById('videoType').addEventListener('change', function () {
-        var group = document.getElementById('videoUrlGroup');
-        if (group) group.style.display = this.value === 'youtube' ? 'block' : 'none';
+      var currentSource = 'upload';
+      var selectedFile = null;
+
+      // Source tab switching
+      document.querySelectorAll('.source-tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          document.querySelectorAll('.source-tab').forEach(function (t) { t.classList.remove('active'); });
+          this.classList.add('active');
+          currentSource = this.getAttribute('data-source');
+          document.getElementById('videoSourceUpload').style.display = currentSource === 'upload' ? 'block' : 'none';
+          document.getElementById('videoSourceYoutube').style.display = currentSource === 'youtube' ? 'block' : 'none';
+        });
       });
+
+      // Drag & drop
+      var dropzone = document.getElementById('videoDropzone');
+      var fileInput = document.getElementById('videoFileInput');
+
+      dropzone.addEventListener('click', function () { fileInput.click(); });
+
+      dropzone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        dropzone.style.borderColor = 'var(--primary)';
+        dropzone.style.background = 'rgba(30,64,175,0.05)';
+      });
+
+      dropzone.addEventListener('dragleave', function () {
+        dropzone.style.borderColor = 'var(--gray-300)';
+        dropzone.style.background = 'var(--gray-50)';
+      });
+
+      dropzone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        dropzone.style.borderColor = 'var(--gray-300)';
+        dropzone.style.background = 'var(--gray-50)';
+        if (e.dataTransfer.files.length) handleVideoFile(e.dataTransfer.files[0]);
+      });
+
+      fileInput.addEventListener('change', function () {
+        if (this.files.length) handleVideoFile(this.files[0]);
+      });
+
+      function handleVideoFile(file) {
+        var allowed = ['video/mp4', 'video/webm', 'video/quicktime'];
+        if (!allowed.includes(file.type)) {
+          showToast('Invalid file type. Allowed: MP4, WebM, MOV', 'error');
+          return;
+        }
+        if (file.size > 100 * 1024 * 1024) {
+          showToast('File too large. Maximum 100MB.', 'error');
+          return;
+        }
+        selectedFile = file;
+        var sizeLabel = file.size > 1024 * 1024 ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' : (file.size / 1024).toFixed(1) + ' KB';
+        document.getElementById('videoFileInfo').style.display = 'block';
+        document.getElementById('videoFileInfo').innerHTML = '<strong>' + escapeHtml(file.name) + '</strong> (' + sizeLabel + ')';
+      }
 
       document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
       document.getElementById('modalSaveBtn').addEventListener('click', async function () {
         var title = document.getElementById('videoTitle').value.trim();
-        var videoType = document.getElementById('videoType').value;
-        var videoUrl = document.getElementById('videoUrl') ? document.getElementById('videoUrl').value.trim() : '';
         var category = document.getElementById('videoCategory') ? document.getElementById('videoCategory').value.trim() : '';
         var duration = document.getElementById('videoDuration') ? document.getElementById('videoDuration').value.trim() : '';
 
-        if (!title || (videoType === 'youtube' && !videoUrl)) {
-          showToast('Title and URL are required.', 'error');
-          return;
-        }
+        if (!title) { showToast('Title is required.', 'error'); return; }
 
-        try {
-          var res = await fetch('/api/videos', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify({ title, videoType, videoUrl, category, duration })
-          });
-          var result = await res.json();
-          if (result.success) {
-            allVideos.push(result.data);
-            renderVideos(allVideos);
-            closeModal();
-            showToast('Video added successfully!');
-          } else {
-            showToast(result.message || 'Failed to add video.', 'error');
+        if (currentSource === 'youtube') {
+          var videoUrl = document.getElementById('videoUrl').value.trim();
+          if (!videoUrl) { showToast('YouTube URL is required.', 'error'); return; }
+
+          try {
+            var res = await fetch('/api/videos', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'same-origin',
+              body: JSON.stringify({ title: title, videoType: 'youtube', videoUrl: videoUrl, category: category, duration: duration })
+            });
+            var result = await res.json();
+            if (result.success) {
+              allVideos.push(result.data);
+              renderVideos(allVideos);
+              closeModal();
+              showToast('Video added successfully!');
+            } else {
+              showToast(result.message || 'Failed to add video.', 'error');
+            }
+          } catch (_e) {
+            showToast('Failed to add video.', 'error');
           }
-        } catch (_e) {
-          showToast('Failed to add video.', 'error');
+        } else {
+          if (!selectedFile) { showToast('Please select a video file to upload.', 'error'); return; }
+
+          var saveBtn = document.getElementById('modalSaveBtn');
+          saveBtn.disabled = true;
+          saveBtn.textContent = 'Uploading...';
+          document.getElementById('uploadProgressWrap').style.display = 'block';
+
+          var formData = new FormData();
+          formData.append('video', selectedFile);
+          formData.append('title', title);
+          formData.append('category', category);
+          formData.append('duration', duration);
+
+          try {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/api/videos/upload', true);
+            xhr.withCredentials = true;
+
+            xhr.upload.onprogress = function (e) {
+              if (e.lengthComputable) {
+                var pct = Math.round((e.loaded / e.total) * 100);
+                document.getElementById('uploadProgressBar').style.width = pct + '%';
+                document.getElementById('uploadPercent').textContent = pct + '%';
+                var elapsed = (Date.now() - startTime) / 1000;
+                var speed = (e.loaded / (1024 * 1024)) / elapsed;
+                document.getElementById('uploadSpeed').textContent = speed.toFixed(1) + ' MB/s';
+              }
+            };
+
+            var startTime = Date.now();
+            xhr.onload = function () {
+              try {
+                var result = JSON.parse(xhr.responseText);
+                if (result.success) {
+                  allVideos.push(result.data);
+                  renderVideos(allVideos);
+                  closeModal();
+                  showToast('Video uploaded and saved!');
+                } else {
+                  showToast(result.message || 'Upload failed.', 'error');
+                  saveBtn.disabled = false;
+                  saveBtn.textContent = 'Save Video';
+                }
+              } catch (_e) {
+                showToast('Upload failed.', 'error');
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Video';
+              }
+            };
+
+            xhr.onerror = function () {
+              showToast('Upload failed. Check your connection.', 'error');
+              saveBtn.disabled = false;
+              saveBtn.textContent = 'Save Video';
+            };
+
+            xhr.send(formData);
+          } catch (_e) {
+            showToast('Upload failed.', 'error');
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Video';
+          }
         }
       });
     });
@@ -940,11 +1082,18 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
   }
 
-  function openModal(title, bodyHtml, footerHtml) {
+  function openModal(title, bodyHtml, footerHtml, onSave) {
     document.getElementById('modalTitle').textContent = title;
     document.getElementById('modalBody').innerHTML = bodyHtml;
     document.getElementById('modalFooter').innerHTML = footerHtml || '';
     document.getElementById('modalOverlay').classList.add('active');
+
+    if (onSave) {
+      var saveBtn = document.getElementById('modalSaveBtn');
+      if (saveBtn) {
+        saveBtn.addEventListener('click', onSave);
+      }
+    }
   }
 
   function closeModal() {
@@ -1214,14 +1363,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     btn.addEventListener('click', function () {
       openModal('Create Registration',
         '<div class="form-row">' +
-          '<div class="form-group"><label>First Name *</label><input type="text" id="crFirstName" class="form-input" placeholder="First name"></div>' +
-          '<div class="form-group"><label>Last Name *</label><input type="text" id="crLastName" class="form-input" placeholder="Last name"></div>' +
-        '</div>' +
-        '<div class="form-row">' +
-          '<div class="form-group"><label>Email *</label><input type="email" id="crEmail" class="form-input" placeholder="email@example.com"></div>' +
-          '<div class="form-group"><label>Phone *</label><input type="tel" id="crPhone" class="form-input" placeholder="08012345678"></div>' +
-        '</div>' +
-        '<div class="form-row">' +
           '<div class="form-group"><label>Category *</label><select id="crCategory" class="form-input">' +
             '<option value="Spectator">Spectator</option>' +
             '<option value="Contestant">Contestant</option>' +
@@ -1236,52 +1377,50 @@ document.addEventListener('DOMContentLoaded', async function () {
             '<option value="VVIP">VVIP</option>' +
           '</select></div>' +
         '</div>' +
-        '<div class="form-group"><label>Quantity (bulk)</label><input type="number" id="crQuantity" class="form-input" value="1" min="1" max="50"></div>',
-        'Create',
-        function () {
-          var firstName = document.getElementById('crFirstName').value.trim();
-          var lastName = document.getElementById('crLastName').value.trim();
-          var email = document.getElementById('crEmail').value.trim();
-          var phone = document.getElementById('crPhone').value.trim();
+        '<div class="form-group"><label>Quantity (bulk)</label><input type="number" id="crQuantity" class="form-input" value="1" min="1" max="50"></div>' +
+        '<p style="font-size:0.8rem;color:var(--gray-500);margin-top:8px;">Registrations will be created with default details (Registered by Admin). You can edit them later.</p>',
+        '<button class="btn btn-outline btn-sm" id="modalCancelBtn">Cancel</button>' +
+        '<button class="btn btn-primary btn-sm" id="modalSaveBtn">Create Registration</button>',
+        async function () {
           var category = document.getElementById('crCategory').value;
           var ticketType = document.getElementById('crTicketType').value;
           var quantity = parseInt(document.getElementById('crQuantity').value) || 1;
 
-          if (!firstName || !lastName || !email || !phone) {
-            showToast('Please fill in all required fields', 'error');
-            return;
-          }
-
           var registrations = [];
           for (var i = 0; i < quantity; i++) {
             registrations.push({
-              firstName: i === 0 ? firstName : firstName + ' ' + (i + 1),
-              lastName: lastName,
-              email: i === 0 ? email : email.replace('@', '+' + (i + 1) + '@'),
-              phone: phone,
+              firstName: 'Registered',
+              lastName: 'by Admin',
+              email: 'admin-registration-' + Date.now() + '-' + i + '@silververse.ng',
+              phone: '',
               category: category,
               ticketType: ticketType,
-              subCategory: ''
+              subCategory: '',
+              paymentTxRef: 'ADMIN-' + Date.now() + '-' + i,
+              paymentStatus: 'verified'
             });
           }
 
-          fetch('/api/admin/registrations', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify({ registrations: registrations })
-          })
-            .then(function (r) { return r.json(); })
-            .then(function (res) {
-              if (res.success) {
-                showToast(res.message);
-                closeModal();
-                loadRegistrations();
-              } else {
-                showToast(res.message, 'error');
-              }
+          try {
+            var res = await fetch('/api/admin/registrations', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'same-origin',
+              body: JSON.stringify({ registrations: registrations })
             });
+            var data = await res.json();
+            if (data.success) {
+              showToast(data.message);
+              closeModal();
+              loadRegistrations();
+            } else {
+              showToast(data.message, 'error');
+            }
+          } catch (_e) {
+            showToast('Failed to create registration.', 'error');
+          }
         });
+      document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
     });
   }
 });
