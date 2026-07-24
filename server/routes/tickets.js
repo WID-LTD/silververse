@@ -175,4 +175,146 @@ router.get('/:regId/qr', async (req, res) => {
   }
 });
 
+// POST /bulk-print — Print multiple tickets (4 per A4 page, 2×2 grid)
+router.post('/bulk-print', requireAuth, async (req, res) => {
+  try {
+    var ids = req.body.ids;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ success: false, message: 'ids must be a non-empty array' });
+    }
+    if (ids.length > 200) {
+      return res.status(400).json({ success: false, message: 'Maximum 200 tickets per batch' });
+    }
+
+    // Fetch all registrations
+    var regs = [];
+    for (var i = 0; i < ids.length; i++) {
+      var regId = ids[i];
+      var r;
+      if (isDBEnabled()) {
+        var sql = getSQL();
+        var result = await sql`
+          SELECT r.*, e.name as event_name, e.event_date, e.venue as event_venue
+          FROM registrations r
+          LEFT JOIN events e ON r.event_id = e.id
+          WHERE r.reg_id = ${regId}
+        `;
+        if (result.length > 0) r = camelRow(result[0]);
+      } else {
+        var mem = getMemRegistrations().find(function (x) { return x.reg_id === regId; });
+        if (mem) {
+          var events = getMemEvents();
+          var ev = events.find(function (e) { return e.id === mem.event_id; });
+          r = camelRow({ ...mem, event_name: ev ? ev.name : '', event_date: ev ? ev.event_date : null, event_venue: ev ? ev.venue : '' });
+        }
+      }
+      if (r) regs.push(r);
+    }
+
+    if (regs.length === 0) {
+      return res.status(404).json({ success: false, message: 'No registrations found' });
+    }
+
+    // Generate QR data URLs in parallel
+    var qrPromises = regs.map(function (reg) {
+      return QRCode.toDataURL(reg.regId || 'ticket', { width: 120, margin: 1 }).catch(function () { return ''; });
+    });
+    var qrDataUrls = await Promise.all(qrPromises);
+
+    // Build compact ticket HTML for each registration
+    function ticketCard(reg, qrDataUrl, idx) {
+      var name = esc((reg.firstName || '') + ' ' + (reg.lastName || ''));
+      var cat = esc(reg.category || 'Spectator');
+      var ticketType = esc(reg.ticketType || 'Regular');
+      var statusLabel = (reg.paymentStatus === 'verified' || reg.paymentStatus === 'approved') ? 'VERIFIED' : 'PENDING';
+      var statusClass = statusLabel === 'VERIFIED' ? 'status-approved' : 'status-pending';
+      var eventDate = reg.eventDate ? esc(reg.eventDate) : '1 August 2026';
+      var eventVenue = esc(reg.eventVenue || 'Rochas Foundation, Ideato, Orlu, Imo State');
+      var eventName = esc(reg.eventName || 'Voices & Visions Festival 2026');
+      var regNum = (reg.regId || '').replace('VV26-', '');
+
+      return '<div class="ticket-cell">' +
+        '<div class="compact-ticket">' +
+          '<div class="ct-left">' +
+            '<div class="ct-logo">SILVERVERSE</div>' +
+            '<div class="ct-pass-type">' + cat.toUpperCase() + ' PASS</div>' +
+            '<div class="ct-event-name">' + eventName + '</div>' +
+            '<div class="ct-field"><span class="ct-label">Name</span><span class="ct-val">' + name + '</span></div>' +
+            '<div class="ct-field"><span class="ct-label">Reg No.</span><span class="ct-val">' + esc(reg.regId || '') + '</span></div>' +
+            '<div class="ct-field"><span class="ct-label">Category</span><span class="ct-val">' + cat + ' \u2014 ' + ticketType + '</span></div>' +
+            '<div class="ct-field"><span class="ct-label">Date</span><span class="ct-val">' + eventDate + '</span></div>' +
+            '<div class="ct-field"><span class="ct-label">Venue</span><span class="ct-val">' + eventVenue + '</span></div>' +
+          '</div>' +
+          '<div class="ct-tear"><div class="ct-tear-dot ct-tear-top"></div><div class="ct-tear-line"></div><div class="ct-tear-dot ct-tear-bottom"></div></div>' +
+          '<div class="ct-right">' +
+            (qrDataUrl ? '<div class="ct-qr"><img src="' + qrDataUrl + '" alt="QR" width="70" height="70"></div>' : '') +
+            '<div class="ct-qr-label">SCAN AT GATE</div>' +
+            '<div class="ct-right-id">' + esc(reg.regId || '') + '</div>' +
+            '<div class="ct-right-status ' + statusClass + '">' + statusLabel + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    var pageGroups = [];
+    for (var i = 0; i < regs.length; i += 4) {
+      pageGroups.push(regs.slice(i, i + 4));
+    }
+
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SilverVerse Tickets</title>';
+    html += '<style>';
+    html += '*{margin:0;padding:0;box-sizing:border-box;}';
+    html += '@page{size:A4 portrait;margin:8mm;}';
+    html += '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}';
+    html += 'body{font-family:Arial,Helvetica,sans-serif;background:#eee;}';
+    html += '.page{width:190mm;min-height:277mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6mm;padding:0;page-break-after:always;}';
+    html += '.page:last-child{page-break-after:auto;}';
+    html += '.ticket-cell{display:flex;}';
+    html += '.compact-ticket{display:flex;width:100%;border-radius:6px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,0.12);background:#fff;}';
+    html += '.ct-left{flex:0 0 65%;background:linear-gradient(135deg,#1e3a5f 0%,#0f1f3a 50%,#0a1628 100%);color:#fff;padding:10px 12px;display:flex;flex-direction:column;gap:3px;position:relative;overflow:hidden;font-size:8px;}';
+    html += '.ct-left::before{content:"";position:absolute;top:-30px;right:-30px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,rgba(212,175,55,0.1) 0%,transparent 70%);pointer-events:none;}';
+    html += '.ct-logo{font-size:9px;font-weight:800;letter-spacing:2px;color:#d4af37;}';
+    html += '.ct-pass-type{font-size:6px;font-weight:700;letter-spacing:1px;color:rgba(212,175,55,0.8);margin-bottom:2px;}';
+    html += '.ct-event-name{font-size:9px;font-weight:700;margin-bottom:4px;line-height:1.2;}';
+    html += '.ct-field{display:flex;gap:3px;line-height:1.3;}';
+    html += '.ct-label{color:rgba(255,255,255,0.55);white-space:nowrap;min-width:36px;}';
+    html += '.ct-val{color:#fff;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}';
+    html += '.ct-tear{flex:0 0 8px;background:#f0f0f0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:2px 0;}';
+    html += '.ct-tear-dot{width:6px;height:6px;border-radius:50%;background:#fff;border:1px solid #ddd;}';
+    html += '.ct-tear-line{flex:1;width:1px;background:linear-gradient(to bottom,transparent 0%,#ccc 30%,#ccc 70%,transparent 100%);}';
+    html += '.ct-right{flex:0 0 27%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;gap:2px;}';
+    html += '.ct-qr img{display:block;}';
+    html += '.ct-qr-label{font-size:5px;font-weight:700;letter-spacing:1px;color:#1e3a5f;}';
+    html += '.ct-right-id{font-size:7px;font-weight:700;color:#333;text-align:center;word-break:break-all;}';
+    html += '.ct-right-status{font-size:6px;font-weight:700;padding:2px 8px;border-radius:3px;}';
+    html += '.status-approved{background:#059669;color:#fff;}';
+    html += '.status-pending{background:#f59e0b;color:#fff;}';
+    html += '</style></head><body>';
+    html += '<div id="printArea">';
+
+    for (var p = 0; p < pageGroups.length; p++) {
+      html += '<div class="page">';
+      for (var t = 0; t < 4; t++) {
+        if (t < pageGroups[p].length) {
+          var idx = p * 4 + t;
+          html += ticketCard(pageGroups[p][t], qrDataUrls[idx], idx);
+        } else {
+          html += '<div class="ticket-cell"></div>';
+        }
+      }
+      html += '</div>';
+    }
+
+    html += '</div>';
+    html += '<script>window.onload=function(){if(window.__autoPrint__!==false)setTimeout(function(){window.print()},500);};<\/script>';
+    html += '</body></html>';
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  } catch (err) {
+    console.error('Bulk print error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;

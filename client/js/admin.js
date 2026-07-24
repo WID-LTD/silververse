@@ -1412,6 +1412,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   function openDownloadModal(regIdOrIds) {
     var ids = Array.isArray(regIdOrIds) ? regIdOrIds : [regIdOrIds];
     var isMulti = ids.length > 1;
+    var maxPerPage = 4;
 
     openModal(isMulti ? 'Download Tickets (' + ids.length + ')' : 'Download Ticket',
       '<div style="max-height:300px;overflow-y:auto;">' +
@@ -1420,10 +1421,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             '<input type="checkbox" class="dlt-check" value="' + escapeAttr(id) + '" checked> <span style="font-size:0.85rem;">' + escapeHtml(id) + '</span></label>';
         }).join('') +
       '</div>' +
-      '<p style="font-size:0.8rem;color:var(--gray-500);margin-top:12px;">One ticket per page. Select tickets above, then choose format.</p>',
+      '<p style="font-size:0.8rem;color:var(--gray-500);margin-top:12px;">Up to ' + maxPerPage + ' tickets per A4 page (2x2 grid). Select tickets above.</p>',
       '<button class="btn btn-outline btn-sm" id="modalCancelBtn">Cancel</button>' +
       '<button class="btn btn-primary btn-sm" id="dltPdfBtn">Download PDF</button>' +
-      '<button class="btn btn-primary btn-sm" id="dltHtmlBtn">View Ticket</button>' +
+      '<button class="btn btn-primary btn-sm" id="dltPngBtn">Download PNG</button>' +
       '<button class="btn btn-primary btn-sm" id="dltPrintBtn">Print</button>',
       function () {});
 
@@ -1436,67 +1437,45 @@ document.addEventListener('DOMContentLoaded', async function () {
     document.getElementById('dltPdfBtn').addEventListener('click', function () {
       var sel = selectedIds();
       if (sel.length === 0) { showToast('Select at least one ticket.', 'error'); return; }
-      downloadTickets(sel, 'pdf');
+      openBulkPrint(sel, true);
       closeModal();
     });
-    document.getElementById('dltHtmlBtn').addEventListener('click', function () {
+    document.getElementById('dltPngBtn').addEventListener('click', function () {
       var sel = selectedIds();
       if (sel.length === 0) { showToast('Select at least one ticket.', 'error'); return; }
-      downloadTickets(sel, 'html');
+      openBulkPrint(sel, false);
       closeModal();
     });
     document.getElementById('dltPrintBtn').addEventListener('click', function () {
       var sel = selectedIds();
       if (sel.length === 0) { showToast('Select at least one ticket.', 'error'); return; }
-      printTickets(sel);
+      openBulkPrint(sel, true);
       closeModal();
     });
   }
 
-  function downloadTickets(ids, format) {
-    ids.forEach(async function (regId) {
-      if (format === 'html') {
-        window.open('/api/ticket/' + encodeURIComponent(regId) + '/download?format=html', '_blank');
-        return;
-      }
-      var url = '/api/ticket/' + encodeURIComponent(regId) + '/download?format=' + format;
-      try {
-        var res = await fetch(url, { credentials: 'include' });
-        if (!res.ok) { showToast('Failed to download ' + regId, 'error'); return; }
-        var blob = await res.blob();
-        var blobUrl = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = regId + '_ticket.' + (format === 'pdf' ? 'pdf' : 'html');
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(blobUrl);
-      } catch (_e) {
-        showToast('Failed to download ' + regId, 'error');
-      }
-    });
-    showToast(format === 'html' ? 'Opening ticket(s)...' : 'Downloading ' + ids.length + ' ticket(s)...');
-  }
-
-  function printTickets(ids) {
-    ids.forEach(async function (regId) {
-      try {
-        var res = await fetch('/api/ticket/' + encodeURIComponent(regId) + '/download?format=html', { credentials: 'include' });
-        if (!res.ok) { showToast('Failed to load ' + regId, 'error'); return; }
-        var html = await res.text();
-        var w = window.open('', '_blank');
-        if (w) {
-          w.document.write(html);
-          w.document.close();
-          w.onload = function () { w.print(); };
+  async function openBulkPrint(ids, autoPrint) {
+    try {
+      var res = await fetch('/api/ticket/bulk-print', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ ids: ids })
+      });
+      if (!res.ok) { showToast('Failed to generate tickets.', 'error'); return; }
+      var html = await res.text();
+      var w = window.open('', '_blank');
+      if (w) {
+        w.document.write(html);
+        w.document.close();
+        if (autoPrint) {
+          w.onload = function () { setTimeout(function () { w.print(); }, 600); };
         }
-      } catch (_e) {
-        showToast('Failed to load ' + regId, 'error');
       }
-    });
-    showToast('Opening ' + ids.length + ' ticket(s) for printing...');
+      showToast(ids.length + ' ticket(s) opened' + (autoPrint ? ' — printing...' : ''));
+    } catch (_e) {
+      showToast('Failed to generate tickets.', 'error');
+    }
   }
 
   // ═══════════════════════════════════════
