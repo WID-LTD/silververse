@@ -221,90 +221,132 @@ router.post('/bulk-print', requireAuth, async (req, res) => {
     });
     var qrDataUrls = await Promise.all(qrPromises);
 
-    // Build compact ticket HTML for each registration
+    // Build split-ticket HTML matching the user-facing ticket design
     function ticketCard(reg, qrDataUrl, idx) {
       var name = esc((reg.firstName || '') + ' ' + (reg.lastName || ''));
       var cat = esc(reg.category || 'Spectator');
       var ticketType = esc(reg.ticketType || 'Regular');
-      var statusLabel = (reg.paymentStatus === 'verified' || reg.paymentStatus === 'approved') ? 'VERIFIED' : 'PENDING';
-      var statusClass = statusLabel === 'VERIFIED' ? 'status-approved' : 'status-pending';
+      var statusLabel = (reg.paymentStatus === 'verified' || reg.paymentStatus === 'approved') ? 'APPROVED' : 'PENDING';
+      var statusClass = statusLabel === 'APPROVED' ? 'status-approved' : 'status-pending';
       var eventDate = reg.eventDate ? esc(reg.eventDate) : '1 August 2026';
       var eventVenue = esc(reg.eventVenue || 'Rochas Foundation, Ideato, Orlu, Imo State');
       var eventName = esc(reg.eventName || 'Voices & Visions Festival 2026');
-      var regNum = (reg.regId || '').replace('VV26-', '');
 
-      return '<div class="ticket-cell">' +
-        '<div class="compact-ticket">' +
-          '<div class="ct-left">' +
-            '<div class="ct-logo">SILVERVERSE</div>' +
-            '<div class="ct-pass-type">' + cat.toUpperCase() + ' PASS</div>' +
-            '<div class="ct-event-name">' + eventName + '</div>' +
-            '<div class="ct-field"><span class="ct-label">Name</span><span class="ct-val">' + name + '</span></div>' +
-            '<div class="ct-field"><span class="ct-label">Reg No.</span><span class="ct-val">' + esc(reg.regId || '') + '</span></div>' +
-            '<div class="ct-field"><span class="ct-label">Category</span><span class="ct-val">' + cat + ' \u2014 ' + ticketType + '</span></div>' +
-            '<div class="ct-field"><span class="ct-label">Date</span><span class="ct-val">' + eventDate + '</span></div>' +
-            '<div class="ct-field"><span class="ct-label">Venue</span><span class="ct-val">' + eventVenue + '</span></div>' +
+      var extraHtml = '';
+      if (reg.category === 'Contestant' && reg.talent) {
+        extraHtml += '<div class="ct-field"><span class="ct-label">Talent</span><span class="ct-val">' + esc(reg.talent) + '</span></div>';
+        extraHtml += '<div class="ct-field"><span class="ct-label">Perf Time</span><span class="ct-val">' + esc(reg.perfTime || 'TBA') + '</span></div>';
+      }
+
+      return '<div class="ticket-wrap">' +
+        '<div class="split-ticket">' +
+          '<div class="st-left">' +
+            '<div class="st-left-header">' +
+              '<div class="st-logo">SILVERVERSE</div>' +
+              '<div class="st-pass-type">' + cat.toUpperCase() + ' PASS</div>' +
+            '</div>' +
+            '<div class="st-left-body">' +
+              '<div class="st-event-name">' + eventName + '</div>' +
+              '<div class="st-field"><span class="st-label">Name</span><span class="st-val">' + name + '</span></div>' +
+              '<div class="st-field"><span class="st-label">Reg No.</span><span class="st-val">' + esc(reg.regId || '') + '</span></div>' +
+              '<div class="st-field"><span class="st-label">Category</span><span class="st-val">' + cat + ' \u2014 ' + ticketType + '</span></div>' +
+              extraHtml +
+            '</div>' +
+            '<div class="st-left-footer">' +
+              '<div class="st-field"><span class="st-label">Date</span><span class="st-val">' + eventDate + '</span></div>' +
+              '<div class="st-field"><span class="st-label">Time</span><span class="st-val">9:00 AM</span></div>' +
+              '<div class="st-field"><span class="st-label">Venue</span><span class="st-val">' + eventVenue + '</span></div>' +
+            '</div>' +
           '</div>' +
-          '<div class="ct-tear"><div class="ct-tear-dot ct-tear-top"></div><div class="ct-tear-line"></div><div class="ct-tear-dot ct-tear-bottom"></div></div>' +
-          '<div class="ct-right">' +
-            (qrDataUrl ? '<div class="ct-qr"><img src="' + qrDataUrl + '" alt="QR" width="60" height="60"></div>' : '') +
-            '<div class="ct-qr-label">SCAN AT GATE</div>' +
-            '<div class="ct-right-id">' + esc(reg.regId || '') + '</div>' +
-            '<div class="ct-right-status ' + statusClass + '">' + statusLabel + '</div>' +
+          '<div class="st-tear">' +
+            '<div class="st-tear-dot top"></div>' +
+            '<div class="st-tear-line"></div>' +
+            '<div class="st-tear-dot bottom"></div>' +
           '</div>' +
+          '<div class="st-right">' +
+            '<div class="st-right-content">' +
+              (qrDataUrl ? '<div class="st-qr"><img src="' + qrDataUrl + '" alt="QR" width="70" height="70"></div>' : '') +
+              '<div class="st-qr-label">SCAN AT GATE</div>' +
+              '<div class="st-right-id">' + esc(reg.regId || '') + '</div>' +
+              '<div class="st-right-status ' + statusClass + '">' + statusLabel + '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="st-bottom-bar">' +
+          '<span class="st-powered">Powered by <strong>SilverVerse</strong></span>' +
+          '<span class="st-id-small">' + esc(reg.regId || '') + '</span>' +
         '</div>' +
       '</div>';
     }
 
     var pageGroups = [];
-    for (var i = 0; i < regs.length; i += 4) {
-      pageGroups.push(regs.slice(i, i + 4));
+    for (var i = 0; i < regs.length; i += 3) {
+      pageGroups.push(regs.slice(i, i + 3));
     }
 
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SilverVerse Tickets</title>';
     html += '<style>';
     html += '*{margin:0;padding:0;box-sizing:border-box;}';
-    html += '@page{size:A4 landscape;margin:5mm;}';
+    html += '@page{size:A4 landscape;margin:6mm;}';
     html += '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}';
     html += 'body{font-family:Arial,Helvetica,sans-serif;background:#eee;}';
-    html += '.page{width:287mm;min-height:200mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4mm;padding:0;page-break-after:always;}';
+    // Page: flex column, 3 tickets
+    html += '.page{width:285mm;min-height:198mm;display:flex;flex-direction:column;gap:4mm;padding:0;page-break-after:always;}';
     html += '.page:last-child{page-break-after:auto;}';
-    html += '.ticket-cell{display:flex;align-items:center;justify-content:center;overflow:hidden;}';
-    html += '.compact-ticket{transform:rotate(90deg);width:130mm;height:94mm;transform-origin:center center;display:flex;border-radius:5px;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,0.12);background:#fff;}';
-    html += '.ct-left{flex:0 0 65%;background:linear-gradient(135deg,#1e3a5f 0%,#0f1f3a 50%,#0a1628 100%);color:#fff;padding:8px 10px;display:flex;flex-direction:column;gap:2px;position:relative;overflow:hidden;font-size:10px;}';
-    html += '.ct-left::before{content:"";position:absolute;top:-30px;right:-30px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,rgba(212,175,55,0.1) 0%,transparent 70%);pointer-events:none;}';
-    html += '.ct-logo{font-size:12px;font-weight:800;letter-spacing:2px;color:#d4af37;}';
-    html += '.ct-pass-type{font-size:8px;font-weight:700;letter-spacing:1px;color:rgba(212,175,55,0.8);margin-bottom:1px;}';
-    html += '.ct-event-name{font-size:11px;font-weight:700;margin-bottom:3px;line-height:1.2;}';
-    html += '.ct-field{display:flex;gap:3px;line-height:1.4;}';
-    html += '.ct-label{color:rgba(255,255,255,0.55);white-space:nowrap;min-width:40px;font-size:9px;}';
-    html += '.ct-val{color:#fff;font-weight:600;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}';
-    html += '.ct-tear{flex:0 0 8px;background:#f0f0f0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:2px 0;}';
-    html += '.ct-tear-dot{width:6px;height:6px;border-radius:50%;background:#fff;border:1px solid #ddd;}';
-    html += '.ct-tear-line{flex:1;width:1px;background:linear-gradient(to bottom,transparent 0%,#ccc 30%,#ccc 70%,transparent 100%);}';
-    html += '.ct-right{flex:0 0 27%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 4px;gap:1px;}';
-    html += '.ct-qr img{display:block;}';
-    html += '.ct-qr-label{font-size:6px;font-weight:700;letter-spacing:1px;color:#1e3a5f;}';
-    html += '.ct-right-id{font-size:8px;font-weight:700;color:#333;text-align:center;word-break:break-all;}';
-    html += '.ct-right-status{font-size:7px;font-weight:700;padding:2px 8px;border-radius:3px;}';
-    html += '.status-approved{background:#059669;color:#fff;}';
-    html += '.status-pending{background:#f59e0b;color:#fff;}';
+    // Scissor-cut wrap around each ticket
+    html += '.ticket-wrap{border:2px dashed #bbb;border-radius:4px;padding:3px;position:relative;flex:1;display:flex;flex-direction:column;}';
+    html += '.ticket-wrap::before{content:"\\2702";position:absolute;top:-7px;left:-7px;font-size:10px;color:#999;background:#eee;padding:1px 2px;line-height:1;}';
+    html += '.ticket-wrap::after{content:"\\2702";position:absolute;bottom:-7px;right:-7px;font-size:10px;color:#999;background:#eee;padding:1px 2px;line-height:1;transform:rotate(180deg);}';
+    // Split-ticket: 80% blue | tear | 18% white
+    html += '.split-ticket{display:flex;flex:1;border-radius:5px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.1);}';
+    // Left panel — 80% blue gradient
+    html += '.st-left{flex:0 0 80%;background:linear-gradient(135deg,#1e3a5f 0%,#0f1f3a 50%,#0a1628 100%);color:#fff;display:flex;flex-direction:column;position:relative;overflow:hidden;}';
+    html += '.st-left::before{content:"";position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(212,175,55,0.1) 0%,transparent 70%);pointer-events:none;}';
+    html += '.st-left-header{padding:7px 14px 0;position:relative;z-index:1;}';
+    html += '.st-logo{font-size:10px;font-weight:800;letter-spacing:3px;color:#d4af37;}';
+    html += '.st-pass-type{font-size:7px;font-weight:700;letter-spacing:2px;padding:3px 8px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.12);border-radius:3px;display:inline-block;margin-bottom:4px;}';
+    html += '.st-left-body{padding:0 14px;flex:1;position:relative;z-index:1;}';
+    html += '.st-event-name{font-size:11px;font-weight:700;margin-bottom:4px;line-height:1.2;}';
+    html += '.st-event-name::after{content:"";display:block;width:30px;height:2px;background:#d4af37;border-radius:2px;margin-top:4px;}';
+    html += '.st-field{display:flex;gap:4px;line-height:1.3;}';
+    html += '.st-label{color:rgba(255,255,255,0.5);white-space:nowrap;min-width:48px;font-size:8px;}';
+    html += '.st-val{color:#fff;font-weight:600;font-size:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}';
+    html += '.st-left-footer{padding:4px 14px;background:rgba(0,0,0,0.15);border-top:1px solid rgba(255,255,255,0.06);position:relative;z-index:1;}';
+    // Tear line
+    html += '.st-tear{flex:0 0 0;width:0;position:relative;z-index:2;}';
+    html += '.st-tear-dot{width:10px;height:10px;background:#eee;border-radius:50%;position:absolute;left:-5px;box-shadow:inset 0 1px 3px rgba(0,0,0,0.08);}';
+    html += '.st-tear-dot.top{top:-5px;}';
+    html += '.st-tear-dot.bottom{bottom:-5px;}';
+    html += '.st-tear-line{position:absolute;left:0;top:5px;bottom:5px;width:2px;background:repeating-linear-gradient(to bottom,#bbb 0px,#bbb 4px,transparent 4px,transparent 8px);}';
+    // Right panel — white with rounded border
+    html += '.st-right{flex:0 0 18%;background:#fff;display:flex;align-items:center;justify-content:center;padding:6px 4px;border-left:2px dashed #ddd;border-radius:0 5px 5px 0;}';
+    html += '.st-right-content{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;width:100%;}';
+    html += '.st-qr img{display:block;border:2px solid #f0f0f0;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,0.05);}';
+    html += '.st-qr-label{font-size:5px;font-weight:700;letter-spacing:1.5px;color:#999;}';
+    html += '.st-right-id{font-size:7px;font-weight:700;color:#555;letter-spacing:0.5px;}';
+    html += '.st-right-status{font-size:6px;font-weight:800;letter-spacing:1px;padding:2px 6px;border-radius:3px;}';
+    html += '.status-approved{background:#d1fae5;color:#059669;}';
+    html += '.status-pending{background:#fef3c7;color:#d97706;}';
+    // Bottom bar
+    html += '.st-bottom-bar{display:flex;justify-content:space-between;align-items:center;padding:3px 14px;background:#f8f8f8;border-top:1px solid #e5e5e5;border-radius:0 0 3px 3px;}';
+    html += '.st-powered{font-size:7px;color:#aaa;}';
+    html += '.st-powered strong{color:#1e3a5f;}';
+    html += '.st-id-small{font-size:7px;font-weight:700;color:#bbb;letter-spacing:0.5px;}';
     html += '<\/style></head><body>';
     html += '<div id="printArea">';
 
     for (var p = 0; p < pageGroups.length; p++) {
       html += '<div class="page">';
-      for (var t = 0; t < 4; t++) {
+      for (var t = 0; t < 3; t++) {
         if (t < pageGroups[p].length) {
-          var idx = p * 4 + t;
+          var idx = p * 3 + t;
           html += ticketCard(pageGroups[p][t], qrDataUrls[idx], idx);
         } else {
-          html += '<div class="ticket-cell"></div>';
+          html += '<div class="ticket-wrap" style="border:none;box-shadow:none;"></div>';
         }
       }
       html += '</div>';
     }
-
     html += '</div>';
     html += '<script>window.onload=function(){if(window.__autoPrint__!==false)setTimeout(function(){window.print()},500);};<\/script>';
     html += '</body></html>';
