@@ -1481,10 +1481,6 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 
   function printTickets(ids) {
-    var printWindow = window.open('', '_blank');
-    printWindow.document.write('<html><head><title>Print Tickets</title></head><body>');
-    ids.forEach(function (regId) {
-        function printTickets(ids) {
     ids.forEach(async function (regId) {
       try {
         var res = await fetch('/api/ticket/' + encodeURIComponent(regId) + '/download?format=html', { credentials: 'include' });
@@ -1501,7 +1497,6 @@ document.addEventListener('DOMContentLoaded', async function () {
       }
     });
     showToast('Opening ' + ids.length + ' ticket(s) for printing...');
-  }
   }
 
   // ═══════════════════════════════════════

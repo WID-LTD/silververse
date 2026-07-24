@@ -633,4 +633,30 @@
   .quick-actions {
     grid-template-columns: 1fr;
   }
+
+  .dash-topbar h2 {
+    font-size: 1rem;
+  }
+
+  .dash-content {
+    padding: 12px;
+  }
+
+  .ticket-card {
+    padding: 16px;
+  }
+
+  .ticket-card-header h3 {
+    font-size: 1rem;
+  }
+
+  .dash-section-header {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .settings-card {
+    padding: 16px;
+  }
 }

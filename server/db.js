@@ -258,10 +258,10 @@ async function seedVideos(sqlFn) {
     const event = await sqlFn`SELECT id FROM events LIMIT 1`;
     const eventId = event.length > 0 ? event[0].id : null;
     const videos = [
-      { title: 'Nigerian Idol — Best Auditions 2025', desc: 'Watch the most incredible auditions from Nigerian Idol 2025. Raw talent, powerful voices, and unforgettable moments.', url: 'https://www.youtube.com/watch?v=VIDEO_ID_1', cat: 'Music', dur: '12:34', sort: 1 },
-      { title: "Africa's Got Talent — Incredible Performances", desc: 'Show-stopping performances from across Africa. Dance, music, and amazing acts that wowed the judges.', url: 'https://www.youtube.com/watch?v=VIDEO_ID_2', cat: 'Dance', dur: '8:21', sort: 2 },
-      { title: 'Nigeria Comedy Talent Hunt — Highlights', desc: 'The funniest comedians from Nigeria compete for the crown. Side-splitting comedy and hilarious stand-up routines.', url: 'https://www.youtube.com/watch?v=VIDEO_ID_3', cat: 'Comedy', dur: '15:07', sort: 3 },
-      { title: 'West Africa Drama Festival — Best Scenes', desc: 'Powerful dramatic performances from the best theatre groups across West Africa. Emotional and captivating storytelling.', url: 'https://www.youtube.com/watch?v=VIDEO_ID_4', cat: 'Drama', dur: '10:45', sort: 4 },
+      { title: 'Nigerian Idol — Best Auditions 2025', desc: 'Watch the most incredible auditions from Nigerian Idol 2025. Raw talent, powerful voices, and unforgettable moments.', url: 'https://www.youtube.com/watch?v=2Vv-BfVoq4g', cat: 'Music', dur: '12:34', sort: 1 },
+      { title: "Africa's Got Talent — Incredible Performances", desc: 'Show-stopping performances from across Africa. Dance, music, and amazing acts that wowed the judges.', url: 'https://www.youtube.com/watch?v=5vPm1iE8FJk', cat: 'Dance', dur: '8:21', sort: 2 },
+      { title: 'Nigeria Comedy Talent Hunt — Highlights', desc: 'The funniest comedians from Nigeria compete for the crown. Side-splitting comedy and hilarious stand-up routines.', url: 'https://www.youtube.com/watch?v=vFqFynv0oGo', cat: 'Comedy', dur: '15:07', sort: 3 },
+      { title: 'Voices & Visions Festival — Grand Finale Teaser', desc: 'Powerful performances from the Voices & Visions Festival grand finale. Emotional and captivating moments from the stage.', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', cat: 'Drama', dur: '10:45', sort: 4 },
     ];
     for (const v of videos) {
       await sqlFn`
@@ -270,6 +270,13 @@ async function seedVideos(sqlFn) {
       `;
     }
     console.log('✓ 4 talent hunt videos seeded');
+  } else {
+    // Fix existing records with placeholder URLs
+    await sqlFn`UPDATE videos SET video_url = 'https://www.youtube.com/watch?v=2Vv-BfVoq4g' WHERE video_url LIKE '%VIDEO_ID_1%'`;
+    await sqlFn`UPDATE videos SET video_url = 'https://www.youtube.com/watch?v=5vPm1iE8FJk' WHERE video_url LIKE '%VIDEO_ID_2%'`;
+    await sqlFn`UPDATE videos SET video_url = 'https://www.youtube.com/watch?v=vFqFynv0oGo' WHERE video_url LIKE '%VIDEO_ID_3%'`;
+    await sqlFn`UPDATE videos SET video_url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' WHERE video_url LIKE '%VIDEO_ID_4%'`;
+    console.log('✓ Existing video URLs fixed');
   }
 }
 
@@ -463,10 +470,10 @@ function seedInMemory() {
 
   if (memVideos.length === 0) {
     const videos = [
-      { title: 'Nigerian Idol — Best Auditions 2025', desc: 'Watch the most incredible auditions from Nigerian Idol 2025. Raw talent, powerful voices, and unforgettable moments.', url: 'https://www.youtube.com/watch?v=VIDEO_ID_1', cat: 'Music', dur: '12:34', sort: 1 },
-      { title: "Africa's Got Talent — Incredible Performances", desc: 'Show-stopping performances from across Africa. Dance, music, and amazing acts that wowed the judges.', url: 'https://www.youtube.com/watch?v=VIDEO_ID_2', cat: 'Dance', dur: '8:21', sort: 2 },
-      { title: 'Nigeria Comedy Talent Hunt — Highlights', desc: 'The funniest comedians from Nigeria compete for the crown. Side-splitting comedy and hilarious stand-up routines.', url: 'https://www.youtube.com/watch?v=VIDEO_ID_3', cat: 'Comedy', dur: '15:07', sort: 3 },
-      { title: 'West Africa Drama Festival — Best Scenes', desc: 'Powerful dramatic performances from the best theatre groups across West Africa. Emotional and captivating storytelling.', url: 'https://www.youtube.com/watch?v=VIDEO_ID_4', cat: 'Drama', dur: '10:45', sort: 4 },
+      { title: 'Nigerian Idol — Best Auditions 2025', desc: 'Watch the most incredible auditions from Nigerian Idol 2025. Raw talent, powerful voices, and unforgettable moments.', url: 'https://www.youtube.com/watch?v=2Vv-BfVoq4g', cat: 'Music', dur: '12:34', sort: 1 },
+      { title: "Africa's Got Talent — Incredible Performances", desc: 'Show-stopping performances from across Africa. Dance, music, and amazing acts that wowed the judges.', url: 'https://www.youtube.com/watch?v=5vPm1iE8FJk', cat: 'Dance', dur: '8:21', sort: 2 },
+      { title: 'Nigeria Comedy Talent Hunt — Highlights', desc: 'The funniest comedians from Nigeria compete for the crown. Side-splitting comedy and hilarious stand-up routines.', url: 'https://www.youtube.com/watch?v=vFqFynv0oGo', cat: 'Comedy', dur: '15:07', sort: 3 },
+      { title: 'Voices & Visions Festival — Grand Finale Teaser', desc: 'Powerful performances from the Voices & Visions Festival grand finale. Emotional and captivating moments from the stage.', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', cat: 'Drama', dur: '10:45', sort: 4 },
     ];
     videos.forEach((v, i) => {
       memVideos.push({ id: i + 1, event_id: 1, title: v.title, description: v.desc, video_type: 'youtube', video_url: v.url, thumbnail_url: '', category: v.cat, duration: v.dur, sort_order: v.sort, created_at: new Date().toISOString() });
