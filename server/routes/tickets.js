@@ -69,7 +69,9 @@ router.get('/:regId', requireAuth, async (req, res) => {
     console.error('Ticket data error:', err);
     res.status(500).json({ success: false, message: err.message });
   }
-// GET /:regId/download — Download ticket as PDF (requireAuth)
+});
+
+// GET /:regId/download — Download ticket as PDF/HTML (requireAuth)
 router.get('/:regId/download', requireAuth, async (req, res) => {
   try {
     const { format } = req.query;
