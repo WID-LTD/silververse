@@ -1,6 +1,16 @@
 document.addEventListener('DOMContentLoaded', function () {
   'use strict';
 
+  // Redirect non-admin users to login
+  fetch('/api/auth/me', { credentials: 'same-origin' })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      var user = d.user || d;
+      if (!d.success && !d.user) { window.location.href = 'login.html'; return; }
+      if (user.role !== 'admin') { window.location.href = 'dashboard.html'; return; }
+    })
+    .catch(function () { window.location.href = 'login.html'; });
+
   var form = document.getElementById('verifyForm');
   var input = document.getElementById('verifyInput');
   var resultEl = document.getElementById('verifyResult');

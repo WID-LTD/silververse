@@ -472,6 +472,16 @@
   background: var(--primary-50);
 }
 
+.admin-table tr.row-selected {
+  background: rgba(212, 175, 55, 0.08);
+  outline: 1px solid var(--primary);
+  outline-offset: -1px;
+}
+
+.admin-table tr.row-selected:hover {
+  background: rgba(212, 175, 55, 0.12);
+}
+
 .admin-table .cell-user {
   display: flex;
   align-items: center;

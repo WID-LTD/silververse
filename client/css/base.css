@@ -494,47 +494,31 @@ img {
   text-overflow: ellipsis;
 }
 
-.nav-login-link {
-  color: var(--white) !important;
-  font-weight: 600 !important;
-  border: 2px solid var(--gold) !important;
-  padding: 6px 16px !important;
-  border-radius: var(--radius) !important;
-  transition: all 0.2s !important;
-}
-
-.navbar-scrolled .nav-login-link {
-  color: var(--primary) !important;
-  border-color: var(--gold) !important;
-}
-
-.nav-login-link:hover {
-  background: var(--gold) !important;
+.nav-btn-gold {
+  background: var(--gradient-gold) !important;
   color: var(--primary-dark) !important;
-}
-
-.nav-register-link {
-  background: var(--gold) !important;
-  color: var(--primary-dark) !important;
-  padding: 6px 16px !important;
-  border-radius: var(--radius) !important;
+  padding: 7px 20px !important;
+  border-radius: 50px !important;
   font-weight: 700 !important;
   font-size: 0.85rem !important;
-  margin-left: 8px;
-  border: 2px solid var(--gold) !important;
-  transition: all 0.2s !important;
+  border: none !important;
+  transition: all 0.25s !important;
+  display: inline-flex;
+  align-items: center;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 8px rgba(212,160,23,0.25);
 }
 
-.navbar-scrolled .nav-register-link {
-  background: transparent !important;
-  color: var(--primary) !important;
-  border-color: var(--primary) !important;
-}
-
-.nav-register-link:hover {
-  background: var(--gold) !important;
+.navbar-scrolled .nav-btn-gold {
+  background: var(--gradient-gold) !important;
   color: var(--primary-dark) !important;
-  border-color: var(--gold) !important;
+  box-shadow: 0 2px 8px rgba(212,160,23,0.2);
+}
+
+.nav-btn-gold:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(212,160,23,0.4);
+  color: var(--primary-dark) !important;
 }
 
 /* ═══════════════════════════════════════

@@ -614,6 +614,13 @@ document.addEventListener('DOMContentLoaded', function () {
           paymentMethod: 'opay'
         })
       });
+
+      if (res.status === 503) {
+        showToast('Payment system is offline. Please contact support.', 'error');
+        if (payBtn) { payBtn.disabled = true; payBtn.textContent = 'Payment Unavailable'; }
+        return;
+      }
+
       var data = await res.json();
 
       if (data.success && data.data && data.data.redirect_url) {

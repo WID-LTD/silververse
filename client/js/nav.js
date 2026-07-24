@@ -59,7 +59,7 @@
         html += '<span class="nav-avatar-initial">' + escapeHtml(initial) + '</span>';
         html += '<span class="nav-avatar-name">' + escapeHtml(displayName) + '</span></span>';
       }
-      html += '<a href="dashboard.html">Dashboard</a>';
+      html += '<a href="dashboard.html" class="nav-btn-gold">Dashboard</a>';
 
       if (user.role === 'admin' || user.isAdmin) {
         html += '<a href="admin.html" class="nav-admin-link">Admin</a>';
@@ -75,8 +75,8 @@
       }
     } catch (_err) {
       authContainer.innerHTML =
-        '<a href="login.html" class="nav-login-link">Login</a>' +
-        '<a href="register.html" class="nav-register-link">Register</a>';
+        '<a href="login.html" class="nav-btn-gold">Login</a>' +
+        '<a href="register.html" class="nav-btn-gold">Register</a>';
     }
   }
 

@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       roadmap: 'Roadmap',
       contact: 'Contact Settings',
       about: 'About Page',
-      blog: 'Blog Posts'
+      verify: 'Verify Ticket',
     };
     document.getElementById('pageTitle').textContent = titles[section] || 'Dashboard';
 
@@ -125,6 +125,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     else if (section === 'contact') loadContactSettings();
     else if (section === 'about') loadAboutContent();
     else if (section === 'blog') loadBlogPosts();
+    else if (section === 'verify') bindVerifySection();
   }
 
   function setupLogout() {
@@ -171,6 +172,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     renderRegistrations(allRegistrations);
   }
 
+  var selectedRegIds = {};
+
   function renderRegistrations(regs) {
     var tbody = document.getElementById('regTableBody');
     if (!tbody) return;
@@ -181,35 +184,38 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     tbody.innerHTML = regs.map(function (r) {
+      var checked = selectedRegIds[r.regId] ? 'checked' : '';
       var statusBadge = r.paymentStatus === 'verified' || r.paymentStatus === 'approved'
         ? '<span class="badge badge-green">Verified</span>'
         : '<span class="badge badge-yellow">Pending</span>';
       var checkinBadge = r.checkedIn
         ? '<span class="badge badge-green">Checked In</span>'
         : '<span class="badge badge-yellow">Not Checked</span>';
-      var amount = r.amountPaid ? '\u20A6' + Number(r.amountPaid).toLocaleString() : '\u20A60';
 
       var imgHtml = r.profileImage
-        ? '<a href="' + escapeAttr(r.profileImage) + '" download="' + escapeAttr(r.firstName + '_' + r.lastName) + '" title="Download image"><img src="' + escapeAttr(r.profileImage) + '" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:50%;border:2px solid var(--primary);"></a>'
+        ? '<img src="' + escapeAttr(r.profileImage) + '" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:50%;border:2px solid var(--primary);">'
         : '<span style="color:var(--gray-400);font-size:0.75rem;">—</span>';
 
-      return '<tr>' +
+      return '<tr class="' + (checked ? 'row-selected' : '') + '">' +
+        '<td><input type="checkbox" class="reg-select" data-regid="' + escapeAttr(r.regId) + '" ' + checked + '></td>' +
         '<td><strong>' + escapeHtml(r.regId || '') + '</strong></td>' +
         '<td>' + imgHtml + '</td>' +
         '<td>' + escapeHtml((r.firstName || '') + ' ' + (r.lastName || '')) + '</td>' +
-        '<td>' + escapeHtml(r.email || '') + '</td>' +
+        '<td style="font-size:0.8rem;">' + escapeHtml(r.email || '') + '</td>' +
         '<td><span class="badge badge-blue">' + escapeHtml(r.category || 'Spectator') + '</span></td>' +
-        '<td>' + amount + '</td>' +
-        '<td>' + statusBadge + ' / ' + checkinBadge + '</td>' +
+        '<td style="font-size:0.75rem;">' + statusBadge + ' ' + checkinBadge + '</td>' +
         '<td>' +
           '<div class="cell-actions">' +
+            '<button class="action-btn" title="Download ticket" data-action="download" data-regid="' + escapeAttr(r.regId) + '">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
+            '</button>' +
             '<button class="action-btn" title="Toggle check-in" data-action="checkin" data-regid="' + escapeAttr(r.regId) + '">' +
               '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>' +
             '</button>' +
             '<button class="action-btn" title="Verify payment" data-action="verify" data-regid="' + escapeAttr(r.regId) + '">' +
               '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
             '</button>' +
-            '<button class="action-btn action-danger" title="Delete registration" data-action="delete-reg" data-id="' + r.id + '" data-regid="' + escapeAttr(r.regId) + '">' +
+            '<button class="action-btn action-danger" title="Delete" data-action="delete-reg" data-id="' + r.id + '" data-regid="' + escapeAttr(r.regId) + '">' +
               '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
             '</button>' +
           '</div>' +
@@ -217,15 +223,61 @@ document.addEventListener('DOMContentLoaded', async function () {
       '</tr>';
     }).join('');
 
+    tbody.querySelectorAll('.reg-select').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var regId = this.getAttribute('data-regid');
+        if (this.checked) selectedRegIds[regId] = true;
+        else delete selectedRegIds[regId];
+        updateBulkDownloadBtn();
+        this.closest('tr').classList.toggle('row-selected', this.checked);
+      });
+    });
+
     tbody.querySelectorAll('[data-action]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var action = this.getAttribute('data-action');
         var regId = this.getAttribute('data-regid');
         var id = this.getAttribute('data-id');
-        if (action === 'checkin') apiToggleCheckin(regId);
+        if (action === 'download') openDownloadModal(regId);
+        else if (action === 'checkin') apiToggleCheckin(regId);
         else if (action === 'verify') apiVerifyPayment(regId);
         else if (action === 'delete-reg') apiDeleteRegistration(id, regId);
       });
+    });
+  }
+
+  function updateBulkDownloadBtn() {
+    var btn = document.getElementById('bulkDownloadBtn');
+    var countEl = document.getElementById('selectedCount');
+    var count = Object.keys(selectedRegIds).length;
+    if (btn && countEl) {
+      countEl.textContent = count;
+      btn.style.display = count > 0 ? 'inline-flex' : 'none';
+    }
+  }
+
+  // Select all checkbox
+  var selectAll = document.getElementById('selectAllRegs');
+  if (selectAll) {
+    selectAll.addEventListener('change', function () {
+      document.querySelectorAll('.reg-select').forEach(function (cb) {
+        cb.checked = this.checked;
+        var regId = cb.getAttribute('data-regid');
+        if (this.checked) selectedRegIds[regId] = true;
+        else delete selectedRegIds[regId];
+        cb.closest('tr').classList.toggle('row-selected', this.checked);
+      }.bind(this));
+      updateBulkDownloadBtn();
+    });
+  }
+
+  // Bulk download button
+  var bulkBtn = document.getElementById('bulkDownloadBtn');
+  if (bulkBtn) {
+    bulkBtn.addEventListener('click', function () {
+      var ids = Object.keys(selectedRegIds);
+      if (ids.length === 0) return;
+      openDownloadModal(ids.length === 1 ? ids[0] : ids);
     });
   }
 
@@ -1352,6 +1404,150 @@ document.addEventListener('DOMContentLoaded', async function () {
           });
       });
     }
+  }
+
+  // ═══════════════════════════════════════
+  // DOWNLOAD MODAL
+  // ═══════════════════════════════════════
+  function openDownloadModal(regIdOrIds) {
+    var ids = Array.isArray(regIdOrIds) ? regIdOrIds : [regIdOrIds];
+    var isMulti = ids.length > 1;
+
+    openModal(isMulti ? 'Download Tickets (' + ids.length + ')' : 'Download Ticket',
+      '<div style="max-height:300px;overflow-y:auto;">' +
+        ids.map(function (id) {
+          return '<label class="checkbox-wrap" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-color);">' +
+            '<input type="checkbox" class="dlt-check" value="' + escapeAttr(id) + '" checked> <span style="font-size:0.85rem;">' + escapeHtml(id) + '</span></label>';
+        }).join('') +
+      '</div>' +
+      '<p style="font-size:0.8rem;color:var(--gray-500);margin-top:12px;">One ticket per page. Select tickets above, then choose format.</p>',
+      '<button class="btn btn-outline btn-sm" id="modalCancelBtn">Cancel</button>' +
+      '<button class="btn btn-primary btn-sm" id="dltPdfBtn">Download PDF</button>' +
+      '<button class="btn btn-primary btn-sm" id="dltPngBtn">Download PNG</button>' +
+      '<button class="btn btn-primary btn-sm" id="dltPrintBtn">Print</button>',
+      function () {});
+
+    document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
+
+    function selectedIds() {
+      return Array.from(document.querySelectorAll('.dlt-check:checked')).map(function (cb) { return cb.value; });
+    }
+
+    document.getElementById('dltPdfBtn').addEventListener('click', function () {
+      var sel = selectedIds();
+      if (sel.length === 0) { showToast('Select at least one ticket.', 'error'); return; }
+      downloadTickets(sel, 'pdf');
+      closeModal();
+    });
+    document.getElementById('dltPngBtn').addEventListener('click', function () {
+      var sel = selectedIds();
+      if (sel.length === 0) { showToast('Select at least one ticket.', 'error'); return; }
+      downloadTickets(sel, 'png');
+      closeModal();
+    });
+    document.getElementById('dltPrintBtn').addEventListener('click', function () {
+      var sel = selectedIds();
+      if (sel.length === 0) { showToast('Select at least one ticket.', 'error'); return; }
+      printTickets(sel);
+      closeModal();
+    });
+  }
+
+  function downloadTickets(ids, format) {
+    ids.forEach(function (regId) {
+      var url = '/api/tickets/' + encodeURIComponent(regId) + '/download?format=' + format;
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = regId + '_ticket.' + format;
+      a.target = '_blank';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
+    showToast('Downloading ' + ids.length + ' ticket(s)...');
+  }
+
+  function printTickets(ids) {
+    var printWindow = window.open('', '_blank');
+    printWindow.document.write('<html><head><title>Print Tickets</title></head><body>');
+    ids.forEach(function (regId) {
+      printWindow.document.write('<img src="/api/tickets/' + encodeURIComponent(regId) + '/download?format=png" style="width:100%;max-width:600px;display:block;margin:0 auto 20px;page-break-after:always;">');
+    });
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.onload = function () { printWindow.print(); };
+  }
+
+  // ═══════════════════════════════════════
+  // VERIFY SECTION
+  // ═══════════════════════════════════════
+  var _verifyBound = false;
+  function bindVerifySection() {
+    if (_verifyBound) return;
+    _verifyBound = true;
+
+    var btn = document.getElementById('verifyTicketBtn');
+    var input = document.getElementById('verifyRegId');
+    var resultEl = document.getElementById('verifyResult');
+    if (!btn || !input || !resultEl) return;
+
+    btn.addEventListener('click', async function () {
+      var regId = input.value.trim().toUpperCase();
+      if (!regId) { input.focus(); return; }
+      resultEl.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Verifying...';
+
+      try {
+        var res = await fetch('/api/verify/' + encodeURIComponent(regId), { credentials: 'same-origin' });
+        var data = await res.json();
+        if (data.success && data.data) {
+          var d = data.data;
+          var checkedIcon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>';
+          var name = (d.firstName || '') + ' ' + (d.lastName || '');
+          resultEl.innerHTML =
+            '<div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius);padding:20px;">' +
+              '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">' + checkedIcon +
+                '<div><strong style="font-size:1.1rem;">' + escapeHtml(d.regId || '') + '</strong><br><span style="color:var(--gray-500);font-size:0.85rem;">' + escapeHtml(d.category || '') + '</span></div>' +
+              '</div>' +
+              '<table style="width:100%;font-size:0.85rem;border-collapse:collapse;">' +
+                '<tr><td style="padding:4px 8px;color:var(--gray-500);">Name</td><td style="padding:4px 8px;">' + escapeHtml(name) + '</td></tr>' +
+                '<tr><td style="padding:4px 8px;color:var(--gray-500);">Email</td><td style="padding:4px 8px;">' + escapeHtml(d.email || '') + '</td></tr>' +
+                '<tr><td style="padding:4px 8px;color:var(--gray-500);">Status</td><td style="padding:4px 8px;">' + (d.paymentStatus === 'verified' || d.paymentStatus === 'approved' ? '<span class="badge badge-green">Verified</span>' : '<span class="badge badge-yellow">Pending</span>') + '</td></tr>' +
+                '<tr><td style="padding:4px 8px;color:var(--gray-500);">Checked In</td><td style="padding:4px 8px;">' + (d.checkedIn ? '<span class="badge badge-green">Yes</span>' : '<span class="badge badge-yellow">No</span>') + '</td></tr>' +
+              '</table>' +
+              '<div style="margin-top:12px;display:flex;gap:8px;">' +
+                '<button class="btn btn-outline btn-sm" id="verifyDownloadBtn" data-regid="' + escapeAttr(d.regId) + '">Download Ticket</button>' +
+                (!d.checkedIn ? '<button class="btn btn-primary btn-sm" id="verifyCheckinBtn" data-regid="' + escapeAttr(d.regId) + '">Check In</button>' : '') +
+              '</div>' +
+            '</div>';
+          resultEl.style.display = 'block';
+
+          var dlBtn = document.getElementById('verifyDownloadBtn');
+          if (dlBtn) dlBtn.addEventListener('click', function () { openDownloadModal(this.getAttribute('data-regid')); });
+          var ciBtn = document.getElementById('verifyCheckinBtn');
+          if (ciBtn) ciBtn.addEventListener('click', function () {
+            var regId = this.getAttribute('data-regid');
+            apiToggleCheckin(regId);
+            this.remove();
+          });
+        } else {
+          resultEl.innerHTML = '<div style="background:var(--bg-card);border:1px solid var(--danger);border-radius:var(--radius);padding:20px;text-align:center;color:var(--danger);">Ticket not found or invalid.</div>';
+          resultEl.style.display = 'block';
+        }
+      } catch (_e) {
+        resultEl.innerHTML = '<div style="background:var(--bg-card);border:1px solid var(--danger);border-radius:var(--radius);padding:20px;text-align:center;color:var(--danger);">Network error. Try again.</div>';
+        resultEl.style.display = 'block';
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Verify Ticket';
+    });
+
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') btn.click();
+    });
   }
 
   // ═══════════════════════════════════════

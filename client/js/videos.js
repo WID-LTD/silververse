@@ -102,8 +102,8 @@
   /* ── Thumbnail ── */
   function getThumbnail(video) {
     if (video.thumbnail) return video.thumbnail;
-    if (video.videoType === 'youtube' && video.url) {
-      var id = extractYouTubeId(video.url);
+    if (video.videoType === 'youtube' && video.videoUrl) {
+      var id = extractYouTubeId(video.videoUrl);
       if (id) return 'https://img.youtube.com/vi/' + id + '/hqdefault.jpg';
     }
     return 'assets/images/stage.jpg';
@@ -150,14 +150,13 @@
     var container = modal.querySelector('.player-container');
     container.innerHTML = '';
 
-    if (video.videoType === 'youtube' && video.url) {
-      var id = extractYouTubeId(video.url);
+    if (video.videoType === 'youtube' && video.videoUrl) {
+      var id = extractYouTubeId(video.videoUrl);
       if (id) {
-        container.innerHTML = '<iframe src="https://www.youtube.com/embed/' + id + '?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen title="' + escapeAttr(video.title || 'Video') + '"></iframe>';
+        container.innerHTML = '<iframe src="https://www.youtube.com/embed/' + id + '?autoplay=1&rel=0" allow="autoplay; encrypted-media" allowfullscreen title="' + escapeAttr(video.title || 'Video') + '" style="width:100%;height:100%;border:none;"></iframe>';
       }
-    } else if (video.src || video.url) {
-      var src = video.src || video.url;
-      container.innerHTML = '<video controls autoplay src="' + escapeAttr(src) + '"></video>';
+    } else if (video.videoUrl) {
+      container.innerHTML = '<video controls autoplay src="' + escapeAttr(video.videoUrl) + '" style="width:100%;height:100%;"></video>';
     }
 
     modal.classList.add('open');
